@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import type { Category, Part } from "@partflow/core";
 import { api } from "../api/client";
 import { colors, typography, spacing, borderRadius, shadows, transitions } from "../styles/design-system";
 import { Modal } from "./Modal";
 
-export function CategoriesManager() {
+export const CategoriesManager = forwardRef((props, ref) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFormModal, setShowFormModal] = useState(false);
@@ -93,6 +93,11 @@ export function CategoriesManager() {
     setFormData({ name: "", description: "" });
     setShowFormModal(true);
   };
+
+  // 暴露 handleCreate 方法给父组件
+  useImperativeHandle(ref, () => ({
+    handleCreate: handleAddNew
+  }));
 
   if (loading) {
     return (
@@ -506,4 +511,4 @@ export function CategoriesManager() {
       </Modal>
     </div>
   );
-}
+});

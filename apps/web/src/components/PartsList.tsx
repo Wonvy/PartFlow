@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import type { Part } from "@partflow/core";
 import { api } from "../api/client";
 import { PartForm } from "./PartForm";
 import { colors, typography, spacing, borderRadius, shadows, transitions } from "../styles/design-system";
 
-export function PartsList() {
+export const PartsList = forwardRef((props, ref) => {
   const [parts, setParts] = useState<Part[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -15,8 +15,6 @@ export function PartsList() {
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [lowStockOnly, setLowStockOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,8 +42,7 @@ export function PartsList() {
       const response = await api.getParts({ 
         search: search || undefined,
         categoryId: selectedCategory || undefined,
-        locationId: selectedLocation || undefined,
-        lowStock: lowStockOnly || undefined
+        locationId: selectedLocation || undefined
       });
       setParts(response.data);
     } catch (err) {
@@ -63,7 +60,6 @@ export function PartsList() {
     setSearch("");
     setSelectedCategory("");
     setSelectedLocation("");
-    setLowStockOnly(false);
     setTimeout(() => loadParts(), 100);
   };
 
@@ -110,6 +106,11 @@ export function PartsList() {
     setShowForm(true);
   };
 
+  // 暴露 handleCreate 方法给父组件
+  useImperativeHandle(ref, () => ({
+    handleCreate
+  }));
+
   if (loading) {
     return (
       <div style={{ 
@@ -151,18 +152,17 @@ export function PartsList() {
 
   return (
     <div>
-      {/* 搜索和操作栏 */}
+      {/* 页头：搜索和筛选栏 */}
       <div style={{ 
         marginBottom: spacing['2xl'], 
         display: "flex", 
         gap: spacing.md, 
-        flexWrap: "wrap",
-        alignItems: "stretch"
+        alignItems: "center",
+        flexWrap: "wrap"
       }}>
-        {/* 搜索框容器 */}
+        {/* 搜索框 */}
         <div style={{ 
-          flex: "1 1 300px",
-          minWidth: "0",
+          width: "280px",
           position: "relative" 
         }}>
           <input
@@ -230,194 +230,92 @@ export function PartsList() {
             </svg>
           </button>
         </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
+        
+        {/* 分类筛选 */}
+        <select
+          value={selectedCategory}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);
+            handleSearch();
+          }}
           style={{
             padding: `${spacing.md} ${spacing.lg}`,
-            background: showFilters ? colors.gray900 : colors.surface,
-            color: showFilters ? colors.white : colors.gray700,
-            border: `1px solid ${showFilters ? colors.gray900 : colors.gray300}`,
+            border: `1px solid ${colors.gray300}`,
             borderRadius: borderRadius.md,
-            cursor: "pointer",
             fontSize: typography.fontSize.sm,
+            color: colors.gray700,
+            backgroundColor: colors.surface,
+            cursor: "pointer",
+            outline: "none",
             fontWeight: typography.fontWeight.medium,
-            transition: transitions.base,
-            whiteSpace: "nowrap"
-          }}
-          onMouseEnter={(e) => {
-            if (!showFilters) {
-              e.currentTarget.style.background = colors.gray100;
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!showFilters) {
-              e.currentTarget.style.background = colors.surface;
-            }
+            minWidth: "120px"
           }}
         >
-          筛选 {showFilters ? "↑" : "↓"}
-        </button>
-        <button
-          onClick={handleCreate}
+          <option value="">全部分类</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+
+        {/* 盒子筛选 */}
+        <select
+          value={selectedLocation}
+          onChange={(e) => {
+            setSelectedLocation(e.target.value);
+            handleSearch();
+          }}
           style={{
-            padding: `${spacing.md} ${spacing.xl}`,
-            background: colors.primary,
-            color: colors.white,
-            border: "none",
+            padding: `${spacing.md} ${spacing.lg}`,
+            border: `1px solid ${colors.gray300}`,
             borderRadius: borderRadius.md,
-            cursor: "pointer",
             fontSize: typography.fontSize.sm,
+            color: colors.gray700,
+            backgroundColor: colors.surface,
+            cursor: "pointer",
+            outline: "none",
             fontWeight: typography.fontWeight.medium,
-            transition: transitions.base,
-            whiteSpace: "nowrap"
+            minWidth: "120px"
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = colors.primaryLight}
-          onMouseLeave={(e) => e.currentTarget.style.background = colors.primary}
         >
-          + 新建零件
-        </button>
+          <option value="">全部盒子</option>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>
+              {loc.code}{loc.name ? ` - ${loc.name}` : ""}
+            </option>
+          ))}
+        </select>
+
+        {/* 清除筛选 */}
+        {(selectedCategory || selectedLocation) && (
+          <button
+            onClick={handleClearFilters}
+            style={{
+              padding: `${spacing.md} ${spacing.lg}`,
+              background: colors.surface,
+              color: colors.gray600,
+              border: `1px solid ${colors.gray300}`,
+              borderRadius: borderRadius.md,
+              cursor: "pointer",
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.medium,
+              transition: transitions.base,
+              whiteSpace: "nowrap"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = colors.gray100;
+              e.currentTarget.style.borderColor = colors.gray400;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = colors.surface;
+              e.currentTarget.style.borderColor = colors.gray300;
+            }}
+          >
+            清除
+          </button>
+        )}
       </div>
-
-      {/* 筛选面板 */}
-      {showFilters && (
-        <div style={{ 
-          marginBottom: spacing['2xl'], 
-          padding: spacing.xl, 
-          background: colors.surface, 
-          border: `1px solid ${colors.gray200}`, 
-          borderRadius: borderRadius.lg 
-        }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: spacing.lg }}>
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: spacing.sm, 
-                fontSize: typography.fontSize.sm, 
-                fontWeight: typography.fontWeight.medium,
-                color: colors.gray700
-              }}>
-                分类
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  border: `1px solid ${colors.gray300}`,
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.gray900,
-                  backgroundColor: colors.surface,
-                  cursor: "pointer",
-                  outline: "none"
-                }}
-              >
-                <option value="">全部分类</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: spacing.sm, 
-                fontSize: typography.fontSize.sm, 
-                fontWeight: typography.fontWeight.medium,
-                color: colors.gray700
-              }}>
-                位置
-              </label>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  border: `1px solid ${colors.gray300}`,
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.gray900,
-                  backgroundColor: colors.surface,
-                  cursor: "pointer",
-                  outline: "none"
-                }}
-              >
-                <option value="">全部位置</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: spacing.sm, 
-                fontSize: typography.fontSize.sm, 
-                fontWeight: typography.fontWeight.medium,
-                color: colors.gray700
-              }}>
-                库存状态
-              </label>
-              <label style={{ display: "flex", alignItems: "center", padding: `${spacing.sm} 0`, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={lowStockOnly}
-                  onChange={(e) => setLowStockOnly(e.target.checked)}
-                  style={{ marginRight: spacing.sm, cursor: "pointer" }}
-                />
-                <span style={{ fontSize: typography.fontSize.sm, color: colors.gray700 }}>仅显示低库存</span>
-              </label>
-            </div>
-          </div>
-
-          <div style={{ marginTop: spacing.lg, display: "flex", gap: spacing.sm }}>
-            <button
-              onClick={handleSearch}
-              style={{
-                padding: `${spacing.sm} ${spacing.lg}`,
-                background: colors.accent,
-                color: colors.white,
-                border: "none",
-                borderRadius: borderRadius.md,
-                cursor: "pointer",
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                transition: transitions.base
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = colors.accentLight}
-              onMouseLeave={(e) => e.currentTarget.style.background = colors.accent}
-            >
-              应用筛选
-            </button>
-            <button
-              onClick={handleClearFilters}
-              style={{
-                padding: `${spacing.sm} ${spacing.lg}`,
-                background: colors.surface,
-                color: colors.gray700,
-                border: `1px solid ${colors.gray300}`,
-                borderRadius: borderRadius.md,
-                cursor: "pointer",
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                transition: transitions.base
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray100}
-              onMouseLeave={(e) => e.currentTarget.style.background = colors.surface}
-            >
-              清除筛选
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 零件列表或空状态 */}
       {parts.length === 0 ? (
@@ -763,5 +661,5 @@ export function PartsList() {
       )}
     </div>
   );
-}
+});
 
