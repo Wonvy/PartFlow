@@ -13,20 +13,44 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.partflow.mobile"
+      "bundleIdentifier": "com.partflow.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PartFlow 需要使用相机来拍摄零件照片",
+        "NSPhotoLibraryUsageDescription": "PartFlow 需要访问相册来选择零件图片",
+        "NSPhotoLibraryAddUsageDescription": "PartFlow 需要保存拍摄的零件照片到相册"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.partflow.mobile"
+      "package": "com.partflow.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "PartFlow 需要使用相机来拍摄零件照片"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PartFlow 需要访问相册来选择零件图片",
+          "cameraPermission": "PartFlow 需要使用相机来拍摄零件照片"
+        }
+      ]
     ]
   }
 }

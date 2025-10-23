@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { Part, Category, Location } from "@partflow/core";
 import { api } from "../api/client";
+import { ImageUpload } from "./ImageUpload";
 
 type PartFormProps = {
   part?: Part;
@@ -17,7 +18,8 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
     minQuantity: part?.minQuantity || 0,
     categoryId: part?.categoryId || "",
     locationId: part?.locationId || "",
-    tags: part?.tags?.join(", ") || ""
+    tags: part?.tags?.join(", ") || "",
+    imageUrl: part?.imageUrl || ""
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,7 +58,8 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
         minQuantity: formData.minQuantity ? Number(formData.minQuantity) : undefined,
         categoryId: formData.categoryId || undefined,
         locationId: formData.locationId || undefined,
-        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined
+        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+        imageUrl: formData.imageUrl || undefined
       };
 
       const result = part
@@ -262,6 +265,16 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
                 borderRadius: 4,
                 fontSize: 14
               }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+              零件图片
+            </label>
+            <ImageUpload
+              value={formData.imageUrl}
+              onChange={(imageUrl) => setFormData({ ...formData, imageUrl })}
             />
           </div>
 

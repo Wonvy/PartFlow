@@ -10,16 +10,41 @@ export function PartsList() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | undefined>(undefined);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadParts();
+    loadFilters();
   }, []);
+
+  const loadFilters = async () => {
+    try {
+      const [categoriesRes, locationsRes] = await Promise.all([
+        api.getCategories(),
+        api.getLocations()
+      ]);
+      setCategories(categoriesRes.data);
+      setLocations(locationsRes.data);
+    } catch (err) {
+      console.error("加载筛选项失败:", err);
+    }
+  };
 
   const loadParts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getParts({ search: search || undefined });
+      const response = await api.getParts({ 
+        search: search || undefined,
+        categoryId: selectedCategory || undefined,
+        locationId: selectedLocation || undefined,
+        lowStock: lowStockOnly || undefined
+      });
       setParts(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载失败");
@@ -30,6 +55,14 @@ export function PartsList() {
 
   const handleSearch = () => {
     loadParts();
+  };
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSelectedCategory("");
+    setSelectedLocation("");
+    setLowStockOnly(false);
+    setTimeout(() => loadParts(), 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -91,15 +124,16 @@ export function PartsList() {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ marginBottom: 24, display: "flex", gap: 12 }}>
+      <div style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="搜索零件..."
+          placeholder="搜索零件（名称、规格、材质）..."
           style={{
             flex: 1,
+            minWidth: 200,
             padding: "8px 12px",
             border: "1px solid #ddd",
             borderRadius: 4,
@@ -118,7 +152,21 @@ export function PartsList() {
             fontSize: 14
           }}
         >
-          搜索
+          🔍 搜索
+        </button>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          style={{
+            padding: "8px 20px",
+            background: showFilters ? "#6366f1" : "white",
+            color: showFilters ? "white" : "#6b7280",
+            border: "1px solid #e5e7eb",
+            borderRadius: 4,
+            cursor: "pointer",
+            fontSize: 14
+          }}
+        >
+          🎯 筛选{showFilters ? " ▲" : " ▼"}
         </button>
         <button
           onClick={handleCreate}
@@ -132,9 +180,115 @@ export function PartsList() {
             fontSize: 14
           }}
         >
-          ➕ 新建零件
+          ➕ 新建
         </button>
       </div>
+
+      {showFilters && (
+        <div style={{ 
+          marginBottom: 16, 
+          padding: 16, 
+          background: "white", 
+          border: "1px solid #e5e7eb", 
+          borderRadius: 8 
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
+                分类筛选
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  fontSize: 13
+                }}
+              >
+                <option value="">全部分类</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
+                位置筛选
+              </label>
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  fontSize: 13
+                }}
+              >
+                <option value="">全部位置</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
+                库存状态
+              </label>
+              <label style={{ display: "flex", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={lowStockOnly}
+                  onChange={(e) => setLowStockOnly(e.target.checked)}
+                  style={{ marginRight: 8 }}
+                />
+                <span style={{ fontSize: 13 }}>仅显示低库存</span>
+              </label>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+            <button
+              onClick={handleSearch}
+              style={{
+                padding: "6px 16px",
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontSize: 13
+              }}
+            >
+              应用筛选
+            </button>
+            <button
+              onClick={handleClearFilters}
+              style={{
+                padding: "6px 16px",
+                background: "white",
+                color: "#6b7280",
+                border: "1px solid #e5e7eb",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontSize: 13
+              }}
+            >
+              清除筛选
+            </button>
+          </div>
+        </div>
+      )}
 
       {parts.length === 0 ? (
         <div style={{ textAlign: "center", padding: 48, color: "#999" }}>
@@ -152,9 +306,25 @@ export function PartsList() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 8,
                 padding: 16,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column"
               }}
             >
+              {part.imageUrl && (
+                <img
+                  src={part.imageUrl}
+                  alt={part.name}
+                  style={{
+                    width: "100%",
+                    height: 150,
+                    objectFit: "cover",
+                    borderRadius: 4,
+                    marginBottom: 12,
+                    background: "#f9fafb"
+                  }}
+                />
+              )}
               <h3 style={{ margin: "0 0 8px 0", fontSize: 16, fontWeight: 600 }}>{part.name}</h3>
               {part.specification && (
                 <p style={{ margin: "4px 0", fontSize: 13, color: "#666" }}>规格: {part.specification}</p>
