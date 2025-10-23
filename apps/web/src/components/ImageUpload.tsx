@@ -123,6 +123,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
         accept="image/*"
         onChange={handleFileSelect}
         style={{ display: "none" }}
+        aria-label="选择图片文件"
       />
 
       {showCamera && (
