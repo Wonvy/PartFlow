@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { PartsList } from "./components/PartsList";
 import { CategoriesManager } from "./components/CategoriesManager";
 import { LocationsManager } from "./components/LocationsManager";
+import { DataManager } from "./components/DataManager";
 import { colors, typography, spacing, borderRadius, shadows } from "./styles/design-system";
 
-type Page = "parts" | "categories" | "locations";
+type Page = "parts" | "categories" | "locations" | "data";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("parts");
@@ -17,6 +18,8 @@ export default function App() {
         return <CategoriesManager />;
       case "locations":
         return <LocationsManager />;
+      case "data":
+        return <DataManager />;
       default:
         return <PartsList />;
     }
@@ -78,11 +81,12 @@ export default function App() {
             borderBottom: `1px solid ${colors.gray200}`,
             marginLeft: `-${spacing.sm}`
           }}>
-            {[
-              { id: "parts", label: "零件", icon: "" },
-              { id: "categories", label: "分类", icon: "" },
-              { id: "locations", label: "位置", icon: "" }
-            ].map(tab => (
+          {[
+            { id: "parts", label: "零件", icon: "" },
+            { id: "categories", label: "分类", icon: "" },
+            { id: "locations", label: "位置", icon: "" },
+            { id: "data", label: "数据", icon: "" }
+          ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setCurrentPage(tab.id as Page)}

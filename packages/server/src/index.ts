@@ -3,6 +3,8 @@ import { initDatabase } from "./db/index.js";
 import { partsRoutes } from "./routes/parts.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { locationsRoutes } from "./routes/locations.js";
+import { exportRoutes } from "./routes/export.js";
+import { importRoutes } from "./routes/import.js";
 
 // 初始化数据库
 initDatabase();
@@ -35,6 +37,8 @@ server.post("/api/seed", async (request, reply) => {
 server.register(partsRoutes, { prefix: "/api" });
 server.register(categoriesRoutes, { prefix: "/api" });
 server.register(locationsRoutes, { prefix: "/api" });
+server.register(exportRoutes, { prefix: "/api" });
+server.register(importRoutes, { prefix: "/api" });
 
 const port = Number(process.env.PORT ?? 3333);
 server
