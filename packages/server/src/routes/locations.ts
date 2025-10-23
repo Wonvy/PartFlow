@@ -1,20 +1,18 @@
 import { FastifyInstance } from "fastify";
 import { createLocation } from "@partflow/core";
-import type { Location } from "@partflow/core";
-
-// 模拟数据库
-const locationsDB: Location[] = [];
+import { LocationsDAO } from "../db/dao/locations.js";
 
 export async function locationsRoutes(fastify: FastifyInstance) {
   // 获取所有位置
   fastify.get("/locations", async (request, reply) => {
-    return { data: locationsDB, total: locationsDB.length };
+    const locations = LocationsDAO.findAll();
+    return { data: locations, total: locations.length };
   });
 
   // 获取单个位置
   fastify.get("/locations/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const location = locationsDB.find((l) => l.id === id);
+    const location = LocationsDAO.findById(id);
     
     if (!location) {
       reply.code(404);
@@ -28,43 +26,38 @@ export async function locationsRoutes(fastify: FastifyInstance) {
   fastify.post("/locations", async (request, reply) => {
     const body = request.body as any;
     const location = createLocation(body);
-    locationsDB.push(location);
+    const created = LocationsDAO.create(location);
     
     reply.code(201);
-    return { data: location };
+    return { data: created };
   });
 
   // 更新位置
   fastify.put("/locations/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = locationsDB.findIndex((l) => l.id === id);
+    const body = request.body as any;
     
-    if (index === -1) {
+    const updated = LocationsDAO.update(id, body);
+    
+    if (!updated) {
       reply.code(404);
       return { error: "Location not found" };
     }
     
-    const body = request.body as any;
-    locationsDB[index] = {
-      ...locationsDB[index],
-      ...body,
-      id
-    };
-    
-    return { data: locationsDB[index] };
+    return { data: updated };
   });
 
   // 删除位置
   fastify.delete("/locations/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = locationsDB.findIndex((l) => l.id === id);
     
-    if (index === -1) {
+    const deleted = LocationsDAO.delete(id);
+    
+    if (!deleted) {
       reply.code(404);
       return { error: "Location not found" };
     }
     
-    locationsDB.splice(index, 1);
     reply.code(204);
     return;
   });

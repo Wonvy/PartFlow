@@ -1,7 +1,11 @@
 import Fastify from "fastify";
+import { initDatabase } from "./db/index.js";
 import { partsRoutes } from "./routes/parts.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { locationsRoutes } from "./routes/locations.js";
+
+// 初始化数据库
+initDatabase();
 
 const server = Fastify({ logger: true });
 

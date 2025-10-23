@@ -1,47 +1,27 @@
 import { FastifyInstance } from "fastify";
-import { createPart, createInventoryChange, applyInventoryChange, isLowStock } from "@partflow/core";
-import type { Part, InventoryChange } from "@partflow/core";
-
-// 模拟数据库（实际项目应使用 SQLite 或 MongoDB）
-const partsDB: Part[] = [];
-const inventoryChangesDB: InventoryChange[] = [];
+import { createPart, createInventoryChange, applyInventoryChange } from "@partflow/core";
+import { PartsDAO } from "../db/dao/parts.js";
+import { InventoryDAO } from "../db/dao/inventory.js";
 
 export async function partsRoutes(fastify: FastifyInstance) {
   // 获取所有零件
   fastify.get("/parts", async (request, reply) => {
     const { search, categoryId, locationId, lowStock } = request.query as any;
     
-    let filtered = [...partsDB];
+    const parts = PartsDAO.search({
+      search,
+      categoryId,
+      locationId,
+      lowStock: lowStock === "true"
+    });
     
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(term) ||
-          p.specification?.toLowerCase().includes(term) ||
-          p.material?.toLowerCase().includes(term)
-      );
-    }
-    
-    if (categoryId) {
-      filtered = filtered.filter((p) => p.categoryId === categoryId);
-    }
-    
-    if (locationId) {
-      filtered = filtered.filter((p) => p.locationId === locationId);
-    }
-    
-    if (lowStock === "true") {
-      filtered = filtered.filter((p) => isLowStock(p));
-    }
-    
-    return { data: filtered, total: filtered.length };
+    return { data: parts, total: parts.length };
   });
 
   // 获取单个零件
   fastify.get("/parts/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const part = partsDB.find((p) => p.id === id);
+    const part = PartsDAO.findById(id);
     
     if (!part) {
       reply.code(404);
@@ -55,44 +35,38 @@ export async function partsRoutes(fastify: FastifyInstance) {
   fastify.post("/parts", async (request, reply) => {
     const body = request.body as any;
     const part = createPart(body);
-    partsDB.push(part);
+    const created = PartsDAO.create(part);
     
     reply.code(201);
-    return { data: part };
+    return { data: created };
   });
 
   // 更新零件
   fastify.put("/parts/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = partsDB.findIndex((p) => p.id === id);
+    const body = request.body as any;
     
-    if (index === -1) {
+    const updated = PartsDAO.update(id, body);
+    
+    if (!updated) {
       reply.code(404);
       return { error: "Part not found" };
     }
     
-    const body = request.body as any;
-    partsDB[index] = {
-      ...partsDB[index],
-      ...body,
-      id,
-      updatedAt: new Date().toISOString()
-    };
-    
-    return { data: partsDB[index] };
+    return { data: updated };
   });
 
   // 删除零件
   fastify.delete("/parts/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = partsDB.findIndex((p) => p.id === id);
     
-    if (index === -1) {
+    const deleted = PartsDAO.delete(id);
+    
+    if (!deleted) {
       reply.code(404);
       return { error: "Part not found" };
     }
     
-    partsDB.splice(index, 1);
     reply.code(204);
     return;
   });
@@ -102,7 +76,7 @@ export async function partsRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = request.body as any;
     
-    const part = partsDB.find((p) => p.id === id);
+    const part = PartsDAO.findById(id);
     if (!part) {
       reply.code(404);
       return { error: "Part not found" };
@@ -115,11 +89,12 @@ export async function partsRoutes(fastify: FastifyInstance) {
       operator: body.operator
     });
     
-    inventoryChangesDB.push(change);
+    // 保存库存变动记录
+    InventoryDAO.create(change);
     
+    // 更新零件库存
     const updatedPart = applyInventoryChange(part, change);
-    const index = partsDB.findIndex((p) => p.id === id);
-    partsDB[index] = updatedPart;
+    PartsDAO.updateQuantity(id, updatedPart.quantity);
     
     return { data: updatedPart };
   });
@@ -127,7 +102,7 @@ export async function partsRoutes(fastify: FastifyInstance) {
   // 获取零件库存变动历史
   fastify.get("/parts/:id/inventory-history", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const history = inventoryChangesDB.filter((c) => c.partId === id);
+    const history = InventoryDAO.findByPartId(id);
     
     return { data: history, total: history.length };
   });

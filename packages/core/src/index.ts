@@ -19,6 +19,7 @@ export type Category = {
   parentId?: string;
   description?: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type Location = {
@@ -26,15 +27,18 @@ export type Location = {
   name: string;
   description?: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type InventoryChange = {
   id: string;
   partId: string;
   delta: number; // positive for in, negative for out
+  changeType: "in" | "out"; // 便于数据库查询
+  quantity: number; // 绝对值
   reason?: string;
   operator?: string;
-  createdAt: string;
+  timestamp: string; // 使用 timestamp 而不是 createdAt，更语义化
 };
 
 export type Tag = {
@@ -62,35 +66,44 @@ export function createPart(input: Omit<Part, "id" | "createdAt" | "updatedAt"> &
   };
 }
 
-export function createCategory(input: Omit<Category, "id" | "createdAt"> & { id?: string }): Category {
+export function createCategory(input: Omit<Category, "id" | "createdAt" | "updatedAt"> & { id?: string }): Category {
+  const now = new Date().toISOString();
   return {
     id: input.id ?? cryptoRandomId(),
     name: input.name,
     parentId: input.parentId,
     description: input.description,
-    createdAt: new Date().toISOString()
+    createdAt: now,
+    updatedAt: now
   };
 }
 
-export function createLocation(input: Omit<Location, "id" | "createdAt"> & { id?: string }): Location {
+export function createLocation(input: Omit<Location, "id" | "createdAt" | "updatedAt"> & { id?: string }): Location {
+  const now = new Date().toISOString();
   return {
     id: input.id ?? cryptoRandomId(),
     name: input.name,
     description: input.description,
-    createdAt: new Date().toISOString()
+    createdAt: now,
+    updatedAt: now
   };
 }
 
 export function createInventoryChange(
-  input: Omit<InventoryChange, "id" | "createdAt"> & { id?: string }
+  input: Omit<InventoryChange, "id" | "changeType" | "quantity" | "timestamp"> & { id?: string; delta: number }
 ): InventoryChange {
+  const changeType = input.delta > 0 ? "in" : "out";
+  const quantity = Math.abs(input.delta);
+  
   return {
     id: input.id ?? cryptoRandomId(),
     partId: input.partId,
     delta: input.delta,
+    changeType,
+    quantity,
     reason: input.reason,
     operator: input.operator,
-    createdAt: new Date().toISOString()
+    timestamp: new Date().toISOString()
   };
 }
 
@@ -108,7 +121,7 @@ export function applyInventoryChange(part: Part, change: InventoryChange): Part 
   return {
     ...part,
     quantity: nextQuantity < 0 ? 0 : nextQuantity,
-    updatedAt: change.createdAt
+    updatedAt: change.timestamp
   };
 }
 

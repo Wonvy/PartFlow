@@ -1,20 +1,18 @@
 import { FastifyInstance } from "fastify";
 import { createCategory, buildCategoryPath } from "@partflow/core";
-import type { Category } from "@partflow/core";
-
-// 模拟数据库
-const categoriesDB: Category[] = [];
+import { CategoriesDAO } from "../db/dao/categories.js";
 
 export async function categoriesRoutes(fastify: FastifyInstance) {
   // 获取所有分类
   fastify.get("/categories", async (request, reply) => {
-    return { data: categoriesDB, total: categoriesDB.length };
+    const categories = CategoriesDAO.findAll();
+    return { data: categories, total: categories.length };
   });
 
   // 获取单个分类
   fastify.get("/categories/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const category = categoriesDB.find((c) => c.id === id);
+    const category = CategoriesDAO.findById(id);
     
     if (!category) {
       reply.code(404);
@@ -28,43 +26,38 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   fastify.post("/categories", async (request, reply) => {
     const body = request.body as any;
     const category = createCategory(body);
-    categoriesDB.push(category);
+    const created = CategoriesDAO.create(category);
     
     reply.code(201);
-    return { data: category };
+    return { data: created };
   });
 
   // 更新分类
   fastify.put("/categories/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = categoriesDB.findIndex((c) => c.id === id);
+    const body = request.body as any;
     
-    if (index === -1) {
+    const updated = CategoriesDAO.update(id, body);
+    
+    if (!updated) {
       reply.code(404);
       return { error: "Category not found" };
     }
     
-    const body = request.body as any;
-    categoriesDB[index] = {
-      ...categoriesDB[index],
-      ...body,
-      id
-    };
-    
-    return { data: categoriesDB[index] };
+    return { data: updated };
   });
 
   // 删除分类
   fastify.delete("/categories/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const index = categoriesDB.findIndex((c) => c.id === id);
     
-    if (index === -1) {
+    const deleted = CategoriesDAO.delete(id);
+    
+    if (!deleted) {
       reply.code(404);
       return { error: "Category not found" };
     }
     
-    categoriesDB.splice(index, 1);
     reply.code(204);
     return;
   });
@@ -72,7 +65,8 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   // 获取分类路径
   fastify.get("/categories/:id/path", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const path = buildCategoryPath(categoriesDB, id);
+    const categories = CategoriesDAO.findAll();
+    const path = buildCategoryPath(categories, id);
     
     return { data: path };
   });
