@@ -16,11 +16,21 @@ export const PartsList = forwardRef((props, ref) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [editingQuantity, setEditingQuantity] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadParts();
     loadFilters();
   }, []);
+
+  // 实时搜索：当搜索条件改变时自动触发（带防抖）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadParts();
+    }, 300); // 300ms 防抖延迟
+
+    return () => clearTimeout(timer);
+  }, [search, selectedCategory, selectedLocation]);
 
   const loadFilters = async () => {
     try {
@@ -52,21 +62,10 @@ export const PartsList = forwardRef((props, ref) => {
     }
   };
 
-  const handleSearch = () => {
-    loadParts();
-  };
-
   const handleClearFilters = () => {
     setSearch("");
     setSelectedCategory("");
     setSelectedLocation("");
-    setTimeout(() => loadParts(), 100);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
   };
 
   const handleDelete = async (part: Part) => {
@@ -110,6 +109,39 @@ export const PartsList = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     handleCreate
   }));
+
+  // 高亮搜索关键词
+  const highlightText = (text: string, keyword: string) => {
+    if (!keyword.trim()) {
+      return <span>{text}</span>;
+    }
+
+    // 使用正则表达式进行不区分大小写的匹配
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+
+    return (
+      <span>
+        {parts.map((part, index) => 
+          regex.test(part) ? (
+            <span 
+              key={index}
+              style={{
+                backgroundColor: '#fef08a', // 黄色背景 (Tailwind yellow-200)
+                color: colors.gray900,
+                padding: '1px 2px',
+                borderRadius: '2px'
+              }}
+            >
+              {part}
+            </span>
+          ) : (
+            <span key={index}>{part}</span>
+          )
+        )}
+      </span>
+    );
+  };
 
   if (loading) {
     return (
@@ -165,16 +197,32 @@ export const PartsList = forwardRef((props, ref) => {
           width: "280px",
           position: "relative" 
         }}>
+          {/* 搜索图标（左侧） */}
+          <div style={{
+            position: "absolute",
+            left: "12px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: colors.gray400,
+            pointerEvents: "none",
+            zIndex: 1
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </div>
+
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyPress={handleKeyPress}
             placeholder="搜索零件名称、规格或材质..."
             style={{
               width: "100%",
               padding: `${spacing.md} ${spacing.lg}`,
-              paddingRight: "50px",
+              paddingLeft: "40px",
+              paddingRight: search ? "40px" : spacing.lg,
               border: `1px solid ${colors.gray300}`,
               borderRadius: borderRadius.md,
               fontSize: typography.fontSize.sm,
@@ -193,51 +241,49 @@ export const PartsList = forwardRef((props, ref) => {
               e.currentTarget.style.boxShadow = "none";
             }}
           />
-          {/* 搜索按钮图标 */}
-          <button
-            onClick={handleSearch}
-            style={{
-              position: "absolute",
-              right: "6px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "36px",
-              height: "36px",
-              background: "transparent",
-              color: colors.gray600,
-              border: "none",
-              borderRadius: borderRadius.md,
-              cursor: "pointer",
-              fontSize: "18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: transitions.base
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = colors.accent;
-              e.currentTarget.style.color = colors.white;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = colors.gray600;
-            }}
-            title="搜索"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-          </button>
+
+          {/* 清除按钮（右侧，仅在有输入时显示） */}
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              style={{
+                position: "absolute",
+                right: "8px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "24px",
+                height: "24px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "transparent",
+                border: "none",
+                borderRadius: borderRadius.full,
+                cursor: "pointer",
+                color: colors.gray500,
+                fontSize: "16px",
+                transition: transitions.fast,
+                padding: 0
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colors.gray100;
+                e.currentTarget.style.color = colors.gray700;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = colors.gray500;
+              }}
+              title="清除搜索"
+            >
+              ×
+            </button>
+          )}
         </div>
         
         {/* 分类筛选 */}
         <select
           value={selectedCategory}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);
-            handleSearch();
-          }}
+          onChange={(e) => setSelectedCategory(e.target.value)}
           style={{
             padding: `${spacing.md} ${spacing.lg}`,
             border: `1px solid ${colors.gray300}`,
@@ -262,10 +308,7 @@ export const PartsList = forwardRef((props, ref) => {
         {/* 盒子筛选 */}
         <select
           value={selectedLocation}
-          onChange={(e) => {
-            setSelectedLocation(e.target.value);
-            handleSearch();
-          }}
+          onChange={(e) => setSelectedLocation(e.target.value)}
           style={{
             padding: `${spacing.md} ${spacing.lg}`,
             border: `1px solid ${colors.gray300}`,
@@ -466,7 +509,7 @@ export const PartsList = forwardRef((props, ref) => {
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap"
                   }}>
-                    {part.name}
+                    {highlightText(part.name, search)}
                   </h3>
                   
                   {/* 规格和材质 */}
@@ -481,7 +524,7 @@ export const PartsList = forwardRef((props, ref) => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap"
                         }}>
-                          {part.specification}
+                          {highlightText(part.specification, search)}
                         </p>
                       )}
                       {part.material && (
@@ -493,7 +536,7 @@ export const PartsList = forwardRef((props, ref) => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap"
                         }}>
-                          {part.material}
+                          {highlightText(part.material, search)}
                         </p>
                       )}
                     </div>
@@ -553,16 +596,34 @@ export const PartsList = forwardRef((props, ref) => {
                       {/* 库存输入框 */}
                       <input
                         type="number"
-                        value={part.quantity}
+                        value={editingQuantity[part.id] ?? part.quantity}
                         onChange={(e) => {
                           e.stopPropagation();
+                          const newValue = parseInt(e.target.value) || 0;
+                          setEditingQuantity(prev => ({
+                            ...prev,
+                            [part.id]: newValue
+                          }));
+                        }}
+                        onBlur={(e) => {
                           const newValue = parseInt(e.target.value) || 0;
                           const delta = newValue - part.quantity;
                           if (delta !== 0) {
                             handleInventoryChange(part, delta);
                           }
+                          // 清除编辑状态
+                          setEditingQuantity(prev => {
+                            const newState = { ...prev };
+                            delete newState[part.id];
+                            return newState;
+                          });
                         }}
                         onClick={(e) => e.stopPropagation()}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur(); // 触发 onBlur 事件
+                          }
+                        }}
                         style={{
                           width: "50px",
                           height: "24px",
