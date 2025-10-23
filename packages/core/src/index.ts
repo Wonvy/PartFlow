@@ -17,6 +17,7 @@ export type Category = {
   id: string;
   name: string;
   parentId?: string;
+  icon?: string; // 分类图标（emoji 或图标名称）
   description?: string;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +74,7 @@ export function createCategory(input: Omit<Category, "id" | "createdAt" | "updat
     id: input.id ?? cryptoRandomId(),
     name: input.name,
     parentId: input.parentId,
+    icon: input.icon,
     description: input.description,
     createdAt: now,
     updatedAt: now

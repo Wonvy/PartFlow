@@ -45,6 +45,34 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
     }
   };
 
+  // 构建层级分类列表
+  const buildHierarchicalCategories = () => {
+    const result: { id: string; label: string; level: number }[] = [];
+    
+    // 递归函数来构建层级
+    const buildTree = (parentId: string | undefined, level: number, prefix: string) => {
+      const children = categories.filter(cat => cat.parentId === parentId);
+      children.forEach(cat => {
+        // 只显示 emoji 图标，不显示图片 URL 或 base64 数据
+        const displayIcon = cat.icon && !cat.icon.startsWith('http') && !cat.icon.startsWith('data:') && !cat.icon.startsWith('/') 
+          ? cat.icon + ' ' 
+          : '';
+        
+        result.push({
+          id: cat.id,
+          label: `${prefix}${displayIcon}${cat.name}`,
+          level
+        });
+        // 递归处理子分类
+        buildTree(cat.id, level + 1, prefix + '　');
+      });
+    };
+    
+    // 从顶级分类开始
+    buildTree(undefined, 0, '');
+    return result;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -240,9 +268,15 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
                     }}
                   >
                     <option value="">-- 请选择 --</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
+                    {buildHierarchicalCategories().map((cat) => (
+                      <option 
+                        key={cat.id} 
+                        value={cat.id}
+                        style={{
+                          paddingLeft: `${cat.level * 16}px`
+                        }}
+                      >
+                        {cat.label}
                       </option>
                     ))}
                   </select>

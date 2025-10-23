@@ -191,7 +191,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
                   padding: "8px 16px"
                 }}
               >
-                📷 将零件放在虚线框内
+                将零件放在虚线框内
               </div>
             </div>
 

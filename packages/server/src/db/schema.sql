@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS categories (
   name TEXT NOT NULL,
   description TEXT,
   parent_id TEXT,
+  icon TEXT, -- 分类图标（emoji 或图标名称）
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE

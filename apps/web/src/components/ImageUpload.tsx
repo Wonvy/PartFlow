@@ -251,7 +251,13 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
+              <div style={{ marginBottom: 12 }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "#9ca3af" }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </div>
               <p style={{ margin: "0 0 8px 0", fontSize: 14, color: "#374151", fontWeight: 500 }}>
                 点击选择图片
               </p>
@@ -259,7 +265,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                 或拖拽图片到此处
               </p>
               <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
-                💡 提示：也可以直接 Ctrl+V 粘贴剪贴板中的图片
+                提示：也可以直接 Ctrl+V 粘贴剪贴板中的图片
               </p>
               <button
                 type="button"
@@ -279,7 +285,11 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                   fontWeight: 500
                 }}
               >
-                📷 使用相机拍照
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "6px", verticalAlign: "middle" }}>
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                使用相机拍照
               </button>
               <p style={{ margin: "12px 0 0 0", fontSize: 11, color: "#9ca3af" }}>
                 支持 JPG、PNG、GIF，最大 5MB

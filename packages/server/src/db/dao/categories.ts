@@ -5,8 +5,8 @@ export class CategoriesDAO {
   // 创建分类
   static create(category: Category): Category {
     const stmt = db.prepare(`
-      INSERT INTO categories (id, name, description, parent_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, name, description, parent_id, icon, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -14,6 +14,7 @@ export class CategoriesDAO {
       category.name,
       category.description || null,
       category.parentId || null,
+      category.icon || null,
       category.createdAt,
       category.updatedAt
     );
@@ -69,6 +70,7 @@ export class CategoriesDAO {
         name = ?,
         description = ?,
         parent_id = ?,
+        icon = ?,
         updated_at = ?
       WHERE id = ?
     `);
@@ -77,6 +79,7 @@ export class CategoriesDAO {
       updated.name,
       updated.description || null,
       updated.parentId || null,
+      updated.icon || null,
       updated.updatedAt,
       id
     );
@@ -99,6 +102,7 @@ export class CategoriesDAO {
       name: row.name,
       description: row.description || undefined,
       parentId: row.parent_id || undefined,
+      icon: row.icon || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };

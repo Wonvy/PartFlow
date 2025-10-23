@@ -45,6 +45,34 @@ export const PartsList = forwardRef((props, ref) => {
     }
   };
 
+  // 构建层级分类列表
+  const buildHierarchicalCategories = () => {
+    const result: { id: string; label: string; level: number }[] = [];
+    
+    // 递归函数来构建层级
+    const buildTree = (parentId: string | undefined, level: number, prefix: string) => {
+      const children = categories.filter((cat: any) => cat.parentId === parentId);
+      children.forEach((cat: any) => {
+        // 只显示 emoji 图标，不显示图片 URL 或 base64 数据
+        const displayIcon = cat.icon && !cat.icon.startsWith('http') && !cat.icon.startsWith('data:') && !cat.icon.startsWith('/') 
+          ? cat.icon + ' ' 
+          : '';
+        
+        result.push({
+          id: cat.id,
+          label: `${prefix}${displayIcon}${cat.name}`,
+          level
+        });
+        // 递归处理子分类
+        buildTree(cat.id, level + 1, prefix + '　');
+      });
+    };
+    
+    // 从顶级分类开始
+    buildTree(undefined, 0, '');
+    return result;
+  };
+
   const loadParts = async () => {
     try {
       setLoading(true);
@@ -188,13 +216,15 @@ export const PartsList = forwardRef((props, ref) => {
       <div style={{ 
         marginBottom: spacing['2xl'], 
         display: "flex", 
+        justifyContent: "space-between",
         gap: spacing.md, 
         alignItems: "center",
         flexWrap: "wrap"
       }}>
         {/* 搜索框 */}
         <div style={{ 
-          width: "280px",
+          flex: 1,
+          maxWidth: "400px",
           position: "relative" 
         }}>
           {/* 搜索图标（左侧） */}
@@ -280,84 +310,97 @@ export const PartsList = forwardRef((props, ref) => {
           )}
         </div>
         
-        {/* 分类筛选 */}
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={{
-            padding: `${spacing.md} ${spacing.lg}`,
-            border: `1px solid ${colors.gray300}`,
-            borderRadius: borderRadius.md,
-            fontSize: typography.fontSize.sm,
-            color: colors.gray700,
-            backgroundColor: colors.surface,
-            cursor: "pointer",
-            outline: "none",
-            fontWeight: typography.fontWeight.medium,
-            minWidth: "120px"
-          }}
-        >
-          <option value="">全部分类</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-
-        {/* 盒子筛选 */}
-        <select
-          value={selectedLocation}
-          onChange={(e) => setSelectedLocation(e.target.value)}
-          style={{
-            padding: `${spacing.md} ${spacing.lg}`,
-            border: `1px solid ${colors.gray300}`,
-            borderRadius: borderRadius.md,
-            fontSize: typography.fontSize.sm,
-            color: colors.gray700,
-            backgroundColor: colors.surface,
-            cursor: "pointer",
-            outline: "none",
-            fontWeight: typography.fontWeight.medium,
-            minWidth: "120px"
-          }}
-        >
-          <option value="">全部盒子</option>
-          {locations.map((loc) => (
-            <option key={loc.id} value={loc.id}>
-              {loc.code}{loc.name ? ` - ${loc.name}` : ""}
-            </option>
-          ))}
-        </select>
-
-        {/* 清除筛选 */}
-        {(selectedCategory || selectedLocation) && (
-          <button
-            onClick={handleClearFilters}
+        {/* 筛选按钮组（右侧） */}
+        <div style={{
+          display: "flex",
+          gap: spacing.md,
+          alignItems: "center"
+        }}>
+          {/* 分类筛选 */}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             style={{
               padding: `${spacing.md} ${spacing.lg}`,
-              background: colors.surface,
-              color: colors.gray600,
               border: `1px solid ${colors.gray300}`,
               borderRadius: borderRadius.md,
-              cursor: "pointer",
               fontSize: typography.fontSize.sm,
+              color: colors.gray700,
+              backgroundColor: colors.surface,
+              cursor: "pointer",
+              outline: "none",
               fontWeight: typography.fontWeight.medium,
-              transition: transitions.base,
-              whiteSpace: "nowrap"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = colors.gray100;
-              e.currentTarget.style.borderColor = colors.gray400;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = colors.surface;
-              e.currentTarget.style.borderColor = colors.gray300;
+              minWidth: "120px"
             }}
           >
-            清除
-          </button>
-        )}
+            <option value="">全部分类</option>
+            {buildHierarchicalCategories().map((cat) => (
+              <option 
+                key={cat.id} 
+                value={cat.id}
+                style={{
+                  paddingLeft: `${cat.level * 16}px`
+                }}
+              >
+                {cat.label}
+              </option>
+            ))}
+          </select>
+
+          {/* 盒子筛选 */}
+          <select
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            style={{
+              padding: `${spacing.md} ${spacing.lg}`,
+              border: `1px solid ${colors.gray300}`,
+              borderRadius: borderRadius.md,
+              fontSize: typography.fontSize.sm,
+              color: colors.gray700,
+              backgroundColor: colors.surface,
+              cursor: "pointer",
+              outline: "none",
+              fontWeight: typography.fontWeight.medium,
+              minWidth: "120px"
+            }}
+          >
+            <option value="">全部盒子</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.code}{loc.name ? ` - ${loc.name}` : ""}
+              </option>
+            ))}
+          </select>
+
+          {/* 清除筛选 */}
+          {(selectedCategory || selectedLocation) && (
+            <button
+              onClick={handleClearFilters}
+              style={{
+                padding: `${spacing.md} ${spacing.lg}`,
+                background: colors.surface,
+                color: colors.gray600,
+                border: `1px solid ${colors.gray300}`,
+                borderRadius: borderRadius.md,
+                cursor: "pointer",
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                transition: transitions.base,
+                whiteSpace: "nowrap"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colors.gray100;
+                e.currentTarget.style.borderColor = colors.gray400;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = colors.surface;
+                e.currentTarget.style.borderColor = colors.gray300;
+              }}
+            >
+              清除
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 零件列表或空状态 */}
