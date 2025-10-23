@@ -24,7 +24,8 @@ export type Category = {
 
 export type Location = {
   id: string;
-  name: string;
+  code: string; // 盒子编号，如 A1, TC23
+  name?: string; // 盒子名称改为可选
   description?: string;
   createdAt: string;
   updatedAt: string;
@@ -82,6 +83,7 @@ export function createLocation(input: Omit<Location, "id" | "createdAt" | "updat
   const now = new Date().toISOString();
   return {
     id: input.id ?? cryptoRandomId(),
+    code: input.code.toUpperCase(), // 自动转大写
     name: input.name,
     description: input.description,
     createdAt: now,

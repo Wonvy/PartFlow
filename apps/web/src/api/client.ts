@@ -64,6 +64,17 @@ export const api = {
       body: JSON.stringify(category)
     }),
 
+  updateCategory: (id: string, category: Partial<Category>) =>
+    fetchAPI<{ data: Category }>(`/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(category)
+    }),
+
+  deleteCategory: (id: string) =>
+    fetchAPI<void>(`/categories/${id}`, {
+      method: "DELETE"
+    }),
+
   // Locations
   getLocations: () => fetchAPI<{ data: Location[]; total: number }>("/locations"),
 
@@ -71,6 +82,17 @@ export const api = {
     fetchAPI<{ data: Location }>("/locations", {
       method: "POST",
       body: JSON.stringify(location)
+    }),
+
+  updateLocation: (id: string, location: Partial<Location>) =>
+    fetchAPI<{ data: Location }>(`/locations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(location)
+    }),
+
+  deleteLocation: (id: string) =>
+    fetchAPI<void>(`/locations/${id}`, {
+      method: "DELETE"
     })
 };
 

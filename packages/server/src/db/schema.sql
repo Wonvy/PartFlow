@@ -12,10 +12,11 @@ CREATE TABLE IF NOT EXISTS categories (
   FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
--- 位置表
+-- 盒子表
 CREATE TABLE IF NOT EXISTS locations (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  code TEXT NOT NULL UNIQUE, -- 盒子编号，唯一
+  name TEXT, -- 名称改为可选
   description TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL

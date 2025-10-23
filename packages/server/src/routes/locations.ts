@@ -22,9 +22,19 @@ export async function locationsRoutes(fastify: FastifyInstance) {
     return { data: location };
   });
 
-  // 创建位置
+  // 创建盒子
   fastify.post("/locations", async (request, reply) => {
     const body = request.body as any;
+    
+    // 验证编号是否已存在
+    if (body.code) {
+      const existing = LocationsDAO.findByCode(body.code);
+      if (existing) {
+        reply.code(400);
+        return { error: `盒子编号 ${body.code.toUpperCase()} 已存在` };
+      }
+    }
+    
     const location = createLocation(body);
     const created = LocationsDAO.create(location);
     
@@ -32,19 +42,27 @@ export async function locationsRoutes(fastify: FastifyInstance) {
     return { data: created };
   });
 
-  // 更新位置
+  // 更新盒子
   fastify.put("/locations/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const body = request.body as any;
     
-    const updated = LocationsDAO.update(id, body);
-    
-    if (!updated) {
-      reply.code(404);
-      return { error: "Location not found" };
+    try {
+      const updated = LocationsDAO.update(id, body);
+      
+      if (!updated) {
+        reply.code(404);
+        return { error: "Location not found" };
+      }
+      
+      return { data: updated };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('已存在')) {
+        reply.code(400);
+        return { error: error.message };
+      }
+      throw error;
     }
-    
-    return { data: updated };
   });
 
   // 删除位置

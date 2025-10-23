@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import type { Category, Part } from "@partflow/core";
 import { api } from "../api/client";
 import { colors, typography, spacing, borderRadius, shadows, transitions } from "../styles/design-system";
+import { Modal } from "./Modal";
 
 export function CategoriesManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [showPartsModal, setShowPartsModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [categoryParts, setCategoryParts] = useState<Part[]>([]);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export function CategoriesManager() {
         await api.createCategory(formData);
       }
       setFormData({ name: "", description: "" });
-      setShowForm(false);
+      setShowFormModal(false);
       setEditingId(null);
       loadCategories();
     } catch (err) {
@@ -50,7 +52,7 @@ export function CategoriesManager() {
     e.stopPropagation();
     setFormData({ name: category.name, description: category.description || "" });
     setEditingId(category.id);
-    setShowForm(true);
+    setShowFormModal(true);
   };
 
   const handleDelete = async (id: string, name: string, e: React.MouseEvent) => {
@@ -60,7 +62,7 @@ export function CategoriesManager() {
     try {
       await api.deleteCategory(id);
       loadCategories();
-      if (selectedCategory === id) {
+      if (selectedCategory?.id === id) {
         setSelectedCategory(null);
         setCategoryParts([]);
       }
@@ -69,26 +71,27 @@ export function CategoriesManager() {
     }
   };
 
-  const handleViewParts = async (categoryId: string) => {
+  const handleViewParts = async (category: Category) => {
     try {
-      if (selectedCategory === categoryId) {
-        setSelectedCategory(null);
-        setCategoryParts([]);
-        return;
-      }
-      
-      const response = await api.getParts({ categoryId });
+      const response = await api.getParts({ categoryId: category.id });
       setCategoryParts(response.data);
-      setSelectedCategory(categoryId);
+      setSelectedCategory(category);
+      setShowPartsModal(true);
     } catch (err) {
       alert(`加载零件失败: ${err instanceof Error ? err.message : "未知错误"}`);
     }
   };
 
   const handleCancel = () => {
-    setShowForm(false);
+    setShowFormModal(false);
     setEditingId(null);
     setFormData({ name: "", description: "" });
+  };
+
+  const handleAddNew = () => {
+    setEditingId(null);
+    setFormData({ name: "", description: "" });
+    setShowFormModal(true);
   };
 
   if (loading) {
@@ -131,19 +134,11 @@ export function CategoriesManager() {
           </p>
         </div>
         <button
-          onClick={() => {
-            if (showForm) {
-              handleCancel();
-            } else {
-              setShowForm(true);
-              setEditingId(null);
-              setFormData({ name: "", description: "" });
-            }
-          }}
+          onClick={handleAddNew}
           style={{
             padding: `${spacing.md} ${spacing.xl}`,
-            background: showForm ? colors.gray200 : colors.primary,
-            color: showForm ? colors.gray700 : colors.white,
+            background: colors.primary,
+            color: colors.white,
             border: "none",
             borderRadius: borderRadius.md,
             cursor: "pointer",
@@ -151,150 +146,12 @@ export function CategoriesManager() {
             fontWeight: typography.fontWeight.medium,
             transition: transitions.base
           }}
-          onMouseEnter={(e) => {
-            if (!showForm) {
-              e.currentTarget.style.background = colors.primaryLight;
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!showForm) {
-              e.currentTarget.style.background = colors.primary;
-            }
-          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = colors.primaryLight}
+          onMouseLeave={(e) => e.currentTarget.style.background = colors.primary}
         >
-          {showForm ? "取消" : "+ 新建分类"}
+          + 新建分类
         </button>
       </div>
-
-      {/* 表单 */}
-      {showForm && (
-        <div style={{
-          marginBottom: spacing['2xl'],
-          padding: spacing.xl,
-          background: colors.surface,
-          border: `1px solid ${colors.gray200}`,
-          borderRadius: borderRadius.lg
-        }}>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: spacing.lg }}>
-              <label style={{
-                display: "block",
-                marginBottom: spacing.sm,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                color: colors.gray700
-              }}>
-                分类名称
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="请输入分类名称"
-                required
-                style={{
-                  width: "100%",
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  border: `1px solid ${colors.gray300}`,
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.gray900,
-                  backgroundColor: colors.surface,
-                  outline: "none",
-                  transition: transitions.base
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = colors.accent;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = colors.gray300;
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: spacing.lg }}>
-              <label style={{
-                display: "block",
-                marginBottom: spacing.sm,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                color: colors.gray700
-              }}>
-                描述（可选）
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="请输入描述"
-                rows={3}
-                style={{
-                  width: "100%",
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  border: `1px solid ${colors.gray300}`,
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.gray900,
-                  backgroundColor: colors.surface,
-                  outline: "none",
-                  resize: "vertical",
-                  fontFamily: typography.fontFamily.base,
-                  transition: transitions.base
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = colors.accent;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = colors.gray300;
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: spacing.sm }}>
-              <button
-                type="submit"
-                style={{
-                  padding: `${spacing.md} ${spacing.xl}`,
-                  background: colors.accent,
-                  color: colors.white,
-                  border: "none",
-                  borderRadius: borderRadius.md,
-                  cursor: "pointer",
-                  fontSize: typography.fontSize.sm,
-                  fontWeight: typography.fontWeight.medium,
-                  transition: transitions.base
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = colors.accentLight}
-                onMouseLeave={(e) => e.currentTarget.style.background = colors.accent}
-              >
-                {editingId ? "保存修改" : "创建分类"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                style={{
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  background: colors.surface,
-                  color: colors.gray700,
-                  border: `1px solid ${colors.gray300}`,
-                  borderRadius: borderRadius.md,
-                  cursor: "pointer",
-                  fontSize: typography.fontSize.sm,
-                  fontWeight: typography.fontWeight.medium,
-                  transition: transitions.base
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = colors.gray100}
-                onMouseLeave={(e) => e.currentTarget.style.background = colors.surface}
-              >
-                取消
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* 分类列表 */}
       {categories.length === 0 ? (
@@ -337,13 +194,13 @@ export function CategoriesManager() {
           {categories.map((category) => (
             <div
               key={category.id}
-              onClick={() => handleViewParts(category.id)}
+              onClick={() => handleViewParts(category)}
               onMouseEnter={() => setHoveredCard(category.id)}
               onMouseLeave={() => setHoveredCard(null)}
               style={{
                 position: "relative",
                 background: colors.surface,
-                border: `2px solid ${selectedCategory === category.id ? colors.accent : colors.gray200}`,
+                border: `2px solid ${colors.gray200}`,
                 borderRadius: borderRadius.lg,
                 padding: spacing.xl,
                 cursor: "pointer",
@@ -404,7 +261,7 @@ export function CategoriesManager() {
               {category.description && (
                 <p style={{
                   margin: 0,
-                  marginBottom: spacing.md,
+                  marginBottom: spacing.xl,
                   fontSize: typography.fontSize.sm,
                   color: colors.gray600,
                   lineHeight: typography.lineHeight.relaxed
@@ -412,23 +269,6 @@ export function CategoriesManager() {
                   {category.description}
                 </p>
               )}
-
-              {/* 零件数量 */}
-              <div style={{
-                marginBottom: spacing.md,
-                padding: `${spacing.sm} ${spacing.md}`,
-                background: colors.gray50,
-                borderRadius: borderRadius.md,
-                display: "inline-block"
-              }}>
-                <span style={{
-                  fontSize: typography.fontSize.xs,
-                  color: colors.gray600,
-                  fontWeight: typography.fontWeight.medium
-                }}>
-                  {selectedCategory === category.id ? `${categoryParts.length} 个零件` : "点击查看零件"}
-                </span>
-              </div>
 
               {/* 编辑按钮 */}
               <div style={{ marginTop: spacing.md }}>
@@ -457,45 +297,213 @@ export function CategoriesManager() {
                   编辑
                 </button>
               </div>
-
-              {/* 展开的零件列表 */}
-              {selectedCategory === category.id && categoryParts.length > 0 && (
-                <div style={{
-                  marginTop: spacing.lg,
-                  paddingTop: spacing.lg,
-                  borderTop: `1px solid ${colors.gray200}`
-                }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
-                    {categoryParts.map((part) => (
-                      <div
-                        key={part.id}
-                        style={{
-                          padding: spacing.md,
-                          background: colors.gray50,
-                          borderRadius: borderRadius.md,
-                          fontSize: typography.fontSize.sm
-                        }}
-                      >
-                        <div style={{ 
-                          fontWeight: typography.fontWeight.medium, 
-                          color: colors.gray900,
-                          marginBottom: spacing.xs
-                        }}>
-                          {part.name}
-                        </div>
-                        <div style={{ color: colors.gray600, fontSize: typography.fontSize.xs }}>
-                          {part.specification && `${part.specification} · `}
-                          库存: {part.quantity}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
       )}
+
+      {/* 表单 Modal */}
+      <Modal
+        isOpen={showFormModal}
+        onClose={handleCancel}
+        title={editingId ? "编辑分类" : "新建分类"}
+        maxWidth="500px"
+      >
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: spacing.lg }}>
+            <label style={{
+              display: "block",
+              marginBottom: spacing.sm,
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.medium,
+              color: colors.gray700
+            }}>
+              分类名称 *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="请输入分类名称"
+              required
+              autoFocus
+              style={{
+                width: "100%",
+                padding: `${spacing.md} ${spacing.lg}`,
+                border: `1px solid ${colors.gray300}`,
+                borderRadius: borderRadius.md,
+                fontSize: typography.fontSize.sm,
+                color: colors.gray900,
+                backgroundColor: colors.surface,
+                outline: "none",
+                transition: transitions.base,
+                boxSizing: "border-box"
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.accent;
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.gray300;
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: spacing.xl }}>
+            <label style={{
+              display: "block",
+              marginBottom: spacing.sm,
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.medium,
+              color: colors.gray700
+            }}>
+              描述（可选）
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="请输入描述"
+              rows={4}
+              style={{
+                width: "100%",
+                padding: `${spacing.md} ${spacing.lg}`,
+                border: `1px solid ${colors.gray300}`,
+                borderRadius: borderRadius.md,
+                fontSize: typography.fontSize.sm,
+                color: colors.gray900,
+                backgroundColor: colors.surface,
+                outline: "none",
+                resize: "vertical",
+                fontFamily: typography.fontFamily.base,
+                transition: transitions.base,
+                boxSizing: "border-box"
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.accent;
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.gray300;
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: spacing.sm, justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              style={{
+                padding: `${spacing.md} ${spacing.xl}`,
+                background: colors.surface,
+                color: colors.gray700,
+                border: `1px solid ${colors.gray300}`,
+                borderRadius: borderRadius.md,
+                cursor: "pointer",
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                transition: transitions.base
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray100}
+              onMouseLeave={(e) => e.currentTarget.style.background = colors.surface}
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              style={{
+                padding: `${spacing.md} ${spacing.xl}`,
+                background: colors.accent,
+                color: colors.white,
+                border: "none",
+                borderRadius: borderRadius.md,
+                cursor: "pointer",
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                transition: transitions.base
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.accentLight}
+              onMouseLeave={(e) => e.currentTarget.style.background = colors.accent}
+            >
+              {editingId ? "保存修改" : "创建分类"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 零件列表 Modal */}
+      <Modal
+        isOpen={showPartsModal}
+        onClose={() => setShowPartsModal(false)}
+        title={selectedCategory ? `${selectedCategory.name} 的零件` : "零件列表"}
+        maxWidth="800px"
+      >
+        {categoryParts.length === 0 ? (
+          <div style={{ textAlign: "center", padding: spacing['3xl'], color: colors.gray500 }}>
+            <p style={{ margin: 0, fontSize: typography.fontSize.base }}>该分类下暂无零件</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+            {categoryParts.map((part) => (
+              <div
+                key={part.id}
+                style={{
+                  padding: spacing.lg,
+                  background: colors.gray50,
+                  borderRadius: borderRadius.md,
+                  border: `1px solid ${colors.gray200}`,
+                  transition: transitions.base
+                }}
+              >
+                <div style={{ 
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: spacing.sm
+                }}>
+                  <div style={{ 
+                    fontWeight: typography.fontWeight.semibold, 
+                    color: colors.gray900,
+                    fontSize: typography.fontSize.base
+                  }}>
+                    {part.name}
+                  </div>
+                  <div style={{
+                    padding: `${spacing.xs} ${spacing.md}`,
+                    background: part.quantity <= (part.minQuantity || 0) ? colors.error : colors.success,
+                    color: colors.white,
+                    borderRadius: borderRadius.full,
+                    fontSize: typography.fontSize.xs,
+                    fontWeight: typography.fontWeight.medium
+                  }}>
+                    库存: {part.quantity}
+                  </div>
+                </div>
+                
+                {part.specification && (
+                  <div style={{ 
+                    color: colors.gray600, 
+                    fontSize: typography.fontSize.sm,
+                    marginBottom: spacing.xs
+                  }}>
+                    规格: {part.specification}
+                  </div>
+                )}
+                
+                {part.material && (
+                  <div style={{ 
+                    color: colors.gray600, 
+                    fontSize: typography.fontSize.sm
+                  }}>
+                    材质: {part.material}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

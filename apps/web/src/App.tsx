@@ -82,9 +82,9 @@ export default function App() {
             marginLeft: `-${spacing.sm}`
           }}>
           {[
+            { id: "locations", label: "盒子", icon: "" },
             { id: "parts", label: "零件", icon: "" },
             { id: "categories", label: "分类", icon: "" },
-            { id: "locations", label: "位置", icon: "" },
             { id: "data", label: "数据", icon: "" }
           ].map(tab => (
               <button

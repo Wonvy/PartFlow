@@ -134,18 +134,18 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
       )}
 
       {preview ? (
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", width: "100%" }}>
           <img
             src={preview}
             alt="预览"
             style={{
               width: "100%",
-              maxWidth: 400,
               maxHeight: 300,
               objectFit: "contain",
               border: "1px solid #e5e7eb",
               borderRadius: 8,
-              background: "#f9fafb"
+              background: "#f9fafb",
+              boxSizing: "border-box"
             }}
           />
           <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -155,14 +155,24 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
               style={{
                 padding: "6px 12px",
                 fontSize: 13,
-                border: "1px solid #2563eb",
+                border: "1px solid #ddd",
                 background: "white",
-                color: "#2563eb",
+                color: "#666",
                 borderRadius: 4,
-                cursor: "pointer"
+                cursor: "pointer",
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f3f4f6";
+                e.currentTarget.style.borderColor = "#9ca3af";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#ddd";
               }}
             >
-              📁 更换图片
+              更换图片
             </button>
             <button
               type="button"
@@ -170,14 +180,24 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
               style={{
                 padding: "6px 12px",
                 fontSize: 13,
-                border: "1px solid #059669",
+                border: "1px solid #ddd",
                 background: "white",
-                color: "#059669",
+                color: "#666",
                 borderRadius: 4,
-                cursor: "pointer"
+                cursor: "pointer",
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f3f4f6";
+                e.currentTarget.style.borderColor = "#9ca3af";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#ddd";
               }}
             >
-              📷 拍照
+              拍照
             </button>
             <button
               type="button"
@@ -185,14 +205,26 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
               style={{
                 padding: "6px 12px",
                 fontSize: 13,
-                border: "1px solid #dc2626",
+                border: "1px solid #ddd",
                 background: "white",
-                color: "#dc2626",
+                color: "#666",
                 borderRadius: 4,
-                cursor: "pointer"
+                cursor: "pointer",
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#dc2626";
+                e.currentTarget.style.borderColor = "#dc2626";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#ddd";
+                e.currentTarget.style.color = "#666";
               }}
             >
-              🗑️ 删除
+              删除
             </button>
           </div>
         </div>

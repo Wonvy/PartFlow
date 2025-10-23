@@ -26,6 +26,7 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     loadCategoriesAndLocations();
@@ -85,197 +86,270 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
       display: "flex", 
       alignItems: "center", 
       justifyContent: "center",
-      zIndex: 1000
+      zIndex: 1000,
+      padding: "20px",
+      overflowY: "auto"
     }}>
-      <div style={{ 
-        background: "white", 
-        borderRadius: 8, 
-        padding: 24, 
-        maxWidth: 600, 
-        width: "90%",
-        maxHeight: "90vh",
-        overflow: "auto"
-      }}>
+      <div 
+        className="part-form-container"
+        style={{ 
+          background: "white", 
+          borderRadius: 8, 
+          padding: "20px", 
+          maxWidth: "900px", 
+          width: "100%",
+          maxHeight: "calc(100vh - 40px)",
+          overflow: "auto",
+          margin: "auto",
+          boxSizing: "border-box"
+        }}
+      >
         <h2 style={{ margin: "0 0 20px 0", fontSize: 20, fontWeight: 600 }}>
           {part ? "编辑零件" : "创建新零件"}
         </h2>
 
+        <style>{`
+          @media (max-width: 768px) {
+            .part-form-container {
+              padding: 16px !important;
+            }
+            .part-form-layout {
+              grid-template-columns: 1fr !important;
+              gap: 16px !important;
+            }
+            .part-form-row {
+              grid-template-columns: 1fr !important;
+            }
+          }
+          @media (min-width: 769px) and (max-width: 900px) {
+            .part-form-container {
+              padding: 18px !important;
+            }
+            .part-form-layout {
+              grid-template-columns: 250px 1fr !important;
+              gap: 20px !important;
+            }
+          }
+        `}</style>
+
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              零件名称 <span style={{ color: "red" }}>*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                fontSize: 14
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              规格
-            </label>
-            <input
-              type="text"
-              value={formData.specification}
-              onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
-              placeholder="例如：长度 20mm, 直径 6mm"
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                fontSize: 14
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              材质
-            </label>
-            <input
-              type="text"
-              value={formData.material}
-              onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-              placeholder="例如：不锈钢 304"
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                fontSize: 14
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          {/* 左右布局：图片 + 表单 */}
+          <div 
+            className="part-form-layout"
+            style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, marginBottom: 20 }}
+          >
+            {/* 左侧：图片 */}
             <div>
               <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-                库存数量 <span style={{ color: "red" }}>*</span>
+                零件图片
               </label>
-              <input
-                type="number"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                required
-                min="0"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 14
-                }}
+              <ImageUpload
+                value={formData.imageUrl}
+                onChange={(imageUrl) => setFormData({ ...formData, imageUrl })}
               />
             </div>
 
+            {/* 右侧：表单 */}
             <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-                预警阈值
-              </label>
-              <input
-                type="number"
-                value={formData.minQuantity}
-                onChange={(e) => setFormData({ ...formData, minQuantity: Number(e.target.value) })}
-                min="0"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 14
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-                分类
-              </label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 14
-                }}
+              {/* 零件名称和规格 - 同一行 */}
+              <div 
+                className="part-form-row"
+                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}
               >
-                <option value="">-- 请选择 --</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                    零件名称 <span style={{ color: "red" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontSize: 14,
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-                位置
-              </label>
-              <select
-                value={formData.locationId}
-                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 14
-                }}
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                    规格
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.specification}
+                    onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+                    placeholder="例如：M6×20"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontSize: 14,
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 库存数量和分类 - 同一行 */}
+              <div 
+                className="part-form-row"
+                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}
               >
-                <option value="">-- 请选择 --</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                    库存数量 <span style={{ color: "red" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                    required
+                    min="0"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontSize: 14,
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                    分类
+                  </label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontSize: 14,
+                      boxSizing: "border-box"
+                    }}
+                  >
+                    <option value="">-- 请选择 --</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 盒子 */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                  盒子
+                </label>
+                <select
+                  value={formData.locationId}
+                  onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                    fontSize: 14,
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <option value="">-- 请选择 --</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.code}{loc.name ? ` - ${loc.name}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 折叠按钮 */}
+              <div style={{ marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: 13,
+                    border: "1px solid #ddd",
+                    background: "white",
+                    color: "#666",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
+                >
+                  <span>{showAdvanced ? "▼" : "▶"}</span>
+                  <span>高级选项</span>
+                </button>
+              </div>
+
+              {/* 折叠内容 */}
+              {showAdvanced && (
+                <div style={{
+                  padding: 16,
+                  background: "#f9fafb",
+                  borderRadius: 4,
+                  marginBottom: 16
+                }}>
+                  {/* 材质 */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                      材质
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.material}
+                      onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                      placeholder="例如：不锈钢 304"
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        fontSize: 14,
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </div>
+
+                  {/* 标签 */}
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+                      标签
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="用逗号分隔，例如：紧固件, 螺栓"
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        fontSize: 14,
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              标签
-            </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="用逗号分隔，例如：紧固件, 螺栓, 不锈钢"
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                fontSize: 14
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              零件图片
-            </label>
-            <ImageUpload
-              value={formData.imageUrl}
-              onChange={(imageUrl) => setFormData({ ...formData, imageUrl })}
-            />
           </div>
 
           {error && (
@@ -291,7 +365,7 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", paddingTop: 12, borderTop: "1px solid #e5e7eb" }}>
             <button
               type="button"
               onClick={onCancel}
