@@ -1,0 +1,26 @@
+{
+  "name": "partflow",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.10.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "pnpm -C apps/web dev",
+    "dev:desktop": "pnpm -C apps/desktop dev",
+    "dev:mobile": "pnpm -C apps/mobile start",
+    "dev:server": "pnpm -C packages/server dev",
+    "build:web": "pnpm -C apps/web build",
+    "build:desktop": "pnpm -C apps/desktop build",
+    "build:core": "pnpm -C packages/core build",
+    "build:utils": "pnpm -C packages/utils build",
+    "build:server": "pnpm -C packages/server build",
+    "build:ai": "pnpm -C packages/ai build",
+    "build:ui": "pnpm -C packages/ui build",
+    "build:packages": "pnpm run build:core && pnpm run build:utils && pnpm run build:server && pnpm run build:ai && pnpm run build:ui",
+    "clean": "pnpm -r run clean"
+  }
+}
+
