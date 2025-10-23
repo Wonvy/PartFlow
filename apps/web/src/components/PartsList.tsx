@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { Part } from "@partflow/core";
 import { api } from "../api/client";
 import { PartForm } from "./PartForm";
+import { colors, typography, spacing, borderRadius, shadows, transitions } from "../styles/design-system";
 
 export function PartsList() {
   const [parts, setParts] = useState<Part[]>([]);
@@ -16,6 +17,7 @@ export function PartsList() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   useEffect(() => {
     loadParts();
@@ -109,103 +111,181 @@ export function PartsList() {
   };
 
   if (loading) {
-    return <div style={{ padding: 24 }}>加载中...</div>;
+    return (
+      <div style={{ 
+        padding: spacing['4xl'], 
+        textAlign: "center",
+        color: colors.gray500,
+        fontSize: typography.fontSize.sm
+      }}>
+        加载中...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div style={{ padding: 24, color: "red" }}>
-        错误: {error}
-        <br />
-        <small>请确保后端服务已启动 (pnpm run dev:server)</small>
+      <div style={{ 
+        padding: spacing['4xl'],
+        textAlign: "center"
+      }}>
+        <div style={{
+          padding: spacing['2xl'],
+          background: colors.surface,
+          border: `1px solid ${colors.error}20`,
+          borderRadius: borderRadius.lg,
+          color: colors.error,
+          maxWidth: "500px",
+          margin: "0 auto"
+        }}>
+          <p style={{ margin: 0, fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.medium }}>
+            错误: {error}
+          </p>
+          <p style={{ margin: `${spacing.md} 0 0 0`, fontSize: typography.fontSize.sm, color: colors.gray600 }}>
+            请确保后端服务已启动 (pnpm run dev:server)
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
+    <div>
+      {/* 搜索和操作栏 */}
+      <div style={{ 
+        marginBottom: spacing['2xl'], 
+        display: "flex", 
+        gap: spacing.md, 
+        flexWrap: "wrap",
+        alignItems: "center"
+      }}>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="搜索零件（名称、规格、材质）..."
+          placeholder="搜索零件名称、规格或材质..."
           style={{
             flex: 1,
-            minWidth: 200,
-            padding: "8px 12px",
-            border: "1px solid #ddd",
-            borderRadius: 4,
-            fontSize: 14
+            minWidth: "280px",
+            padding: `${spacing.md} ${spacing.lg}`,
+            border: `1px solid ${colors.gray300}`,
+            borderRadius: borderRadius.md,
+            fontSize: typography.fontSize.sm,
+            color: colors.gray900,
+            backgroundColor: colors.surface,
+            transition: transitions.base,
+            outline: "none"
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = colors.accent;
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = colors.gray300;
+            e.currentTarget.style.boxShadow = "none";
           }}
         />
         <button
           onClick={handleSearch}
           style={{
-            padding: "8px 24px",
-            background: "#2563eb",
-            color: "white",
+            padding: `${spacing.md} ${spacing.xl}`,
+            background: colors.accent,
+            color: colors.white,
             border: "none",
-            borderRadius: 4,
+            borderRadius: borderRadius.md,
             cursor: "pointer",
-            fontSize: 14
+            fontSize: typography.fontSize.sm,
+            fontWeight: typography.fontWeight.medium,
+            transition: transitions.base,
+            whiteSpace: "nowrap"
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = colors.accentLight}
+          onMouseLeave={(e) => e.currentTarget.style.background = colors.accent}
         >
-          🔍 搜索
+          搜索
         </button>
         <button
           onClick={() => setShowFilters(!showFilters)}
           style={{
-            padding: "8px 20px",
-            background: showFilters ? "#6366f1" : "white",
-            color: showFilters ? "white" : "#6b7280",
-            border: "1px solid #e5e7eb",
-            borderRadius: 4,
+            padding: `${spacing.md} ${spacing.lg}`,
+            background: showFilters ? colors.gray900 : colors.surface,
+            color: showFilters ? colors.white : colors.gray700,
+            border: `1px solid ${showFilters ? colors.gray900 : colors.gray300}`,
+            borderRadius: borderRadius.md,
             cursor: "pointer",
-            fontSize: 14
+            fontSize: typography.fontSize.sm,
+            fontWeight: typography.fontWeight.medium,
+            transition: transitions.base,
+            whiteSpace: "nowrap"
+          }}
+          onMouseEnter={(e) => {
+            if (!showFilters) {
+              e.currentTarget.style.background = colors.gray100;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showFilters) {
+              e.currentTarget.style.background = colors.surface;
+            }
           }}
         >
-          🎯 筛选{showFilters ? " ▲" : " ▼"}
+          筛选 {showFilters ? "↑" : "↓"}
         </button>
         <button
           onClick={handleCreate}
           style={{
-            padding: "8px 24px",
-            background: "#059669",
-            color: "white",
+            padding: `${spacing.md} ${spacing.xl}`,
+            background: colors.primary,
+            color: colors.white,
             border: "none",
-            borderRadius: 4,
+            borderRadius: borderRadius.md,
             cursor: "pointer",
-            fontSize: 14
+            fontSize: typography.fontSize.sm,
+            fontWeight: typography.fontWeight.medium,
+            transition: transitions.base,
+            whiteSpace: "nowrap"
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = colors.primaryLight}
+          onMouseLeave={(e) => e.currentTarget.style.background = colors.primary}
         >
-          ➕ 新建
+          + 新建零件
         </button>
       </div>
 
+      {/* 筛选面板 */}
       {showFilters && (
         <div style={{ 
-          marginBottom: 16, 
-          padding: 16, 
-          background: "white", 
-          border: "1px solid #e5e7eb", 
-          borderRadius: 8 
+          marginBottom: spacing['2xl'], 
+          padding: spacing.xl, 
+          background: colors.surface, 
+          border: `1px solid ${colors.gray200}`, 
+          borderRadius: borderRadius.lg 
         }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: spacing.lg }}>
             <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
-                分类筛选
+              <label style={{ 
+                display: "block", 
+                marginBottom: spacing.sm, 
+                fontSize: typography.fontSize.sm, 
+                fontWeight: typography.fontWeight.medium,
+                color: colors.gray700
+              }}>
+                分类
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "6px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 13
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  border: `1px solid ${colors.gray300}`,
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.sm,
+                  color: colors.gray900,
+                  backgroundColor: colors.surface,
+                  cursor: "pointer",
+                  outline: "none"
                 }}
               >
                 <option value="">全部分类</option>
@@ -218,18 +298,28 @@ export function PartsList() {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
-                位置筛选
+              <label style={{ 
+                display: "block", 
+                marginBottom: spacing.sm, 
+                fontSize: typography.fontSize.sm, 
+                fontWeight: typography.fontWeight.medium,
+                color: colors.gray700
+              }}>
+                位置
               </label>
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "6px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 13
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  border: `1px solid ${colors.gray300}`,
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.sm,
+                  color: colors.gray900,
+                  backgroundColor: colors.surface,
+                  cursor: "pointer",
+                  outline: "none"
                 }}
               >
                 <option value="">全部位置</option>
@@ -242,47 +332,61 @@ export function PartsList() {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
+              <label style={{ 
+                display: "block", 
+                marginBottom: spacing.sm, 
+                fontSize: typography.fontSize.sm, 
+                fontWeight: typography.fontWeight.medium,
+                color: colors.gray700
+              }}>
                 库存状态
               </label>
-              <label style={{ display: "flex", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+              <label style={{ display: "flex", alignItems: "center", padding: `${spacing.sm} 0`, cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={lowStockOnly}
                   onChange={(e) => setLowStockOnly(e.target.checked)}
-                  style={{ marginRight: 8 }}
+                  style={{ marginRight: spacing.sm, cursor: "pointer" }}
                 />
-                <span style={{ fontSize: 13 }}>仅显示低库存</span>
+                <span style={{ fontSize: typography.fontSize.sm, color: colors.gray700 }}>仅显示低库存</span>
               </label>
             </div>
           </div>
 
-          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+          <div style={{ marginTop: spacing.lg, display: "flex", gap: spacing.sm }}>
             <button
               onClick={handleSearch}
               style={{
-                padding: "6px 16px",
-                background: "#2563eb",
-                color: "white",
+                padding: `${spacing.sm} ${spacing.lg}`,
+                background: colors.accent,
+                color: colors.white,
                 border: "none",
-                borderRadius: 4,
+                borderRadius: borderRadius.md,
                 cursor: "pointer",
-                fontSize: 13
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                transition: transitions.base
               }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.accentLight}
+              onMouseLeave={(e) => e.currentTarget.style.background = colors.accent}
             >
               应用筛选
             </button>
             <button
               onClick={handleClearFilters}
               style={{
-                padding: "6px 16px",
-                background: "white",
-                color: "#6b7280",
-                border: "1px solid #e5e7eb",
-                borderRadius: 4,
+                padding: `${spacing.sm} ${spacing.lg}`,
+                background: colors.surface,
+                color: colors.gray700,
+                border: `1px solid ${colors.gray300}`,
+                borderRadius: borderRadius.md,
                 cursor: "pointer",
-                fontSize: 13
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                transition: transitions.base
               }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray100}
+              onMouseLeave={(e) => e.currentTarget.style.background = colors.surface}
             >
               清除筛选
             </button>
@@ -290,58 +394,188 @@ export function PartsList() {
         </div>
       )}
 
+      {/* 零件列表或空状态 */}
       {parts.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 48, color: "#999" }}>
-          暂无零件数据
-          <br />
-          <small>可以通过 API 创建零件: POST http://localhost:3333/api/parts</small>
+        <div style={{ 
+          textAlign: "center", 
+          padding: spacing['5xl'], 
+          color: colors.gray500
+        }}>
+          <div style={{
+            padding: spacing['3xl'],
+            background: colors.surface,
+            borderRadius: borderRadius.lg,
+            maxWidth: "400px",
+            margin: "0 auto"
+          }}>
+            <p style={{ 
+              margin: 0, 
+              fontSize: typography.fontSize.lg, 
+              fontWeight: typography.fontWeight.medium,
+              color: colors.gray700,
+              marginBottom: spacing.md
+            }}>
+              暂无零件数据
+            </p>
+            <p style={{ 
+              margin: 0, 
+              fontSize: typography.fontSize.sm, 
+              color: colors.gray500
+            }}>
+              点击上方"新建零件"按钮开始添加
+            </p>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
+          gap: spacing.xl 
+        }}>
           {parts.map((part) => (
             <div
               key={part.id}
+              onMouseEnter={() => setHoveredCard(part.id)}
+              onMouseLeave={() => setHoveredCard(null)}
               style={{
-                background: "white",
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: 16,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                position: "relative",
+                background: colors.surface,
+                border: `1px solid ${colors.gray200}`,
+                borderRadius: borderRadius.lg,
+                padding: spacing.xl,
                 display: "flex",
-                flexDirection: "column"
+                flexDirection: "column",
+                transition: transitions.base,
+                boxShadow: hoveredCard === part.id ? shadows.lg : "none",
+                borderColor: hoveredCard === part.id ? colors.gray300 : colors.gray200
               }}
             >
+              {/* 删除按钮 - 右上角图标 */}
+              {hoveredCard === part.id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(part);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: spacing.md,
+                    right: spacing.md,
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: colors.surface,
+                    border: `1px solid ${colors.gray300}`,
+                    borderRadius: borderRadius.full,
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    color: colors.gray600,
+                    transition: transitions.fast,
+                    boxShadow: shadows.sm,
+                    zIndex: 10
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = colors.error;
+                    e.currentTarget.style.color = colors.white;
+                    e.currentTarget.style.borderColor = colors.error;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = colors.surface;
+                    e.currentTarget.style.color = colors.gray600;
+                    e.currentTarget.style.borderColor = colors.gray300;
+                  }}
+                >
+                  ×
+                </button>
+              )}
+
+              {/* 零件图片 */}
               {part.imageUrl && (
                 <img
                   src={part.imageUrl}
                   alt={part.name}
                   style={{
                     width: "100%",
-                    height: 150,
+                    height: "180px",
                     objectFit: "cover",
-                    borderRadius: 4,
-                    marginBottom: 12,
-                    background: "#f9fafb"
+                    borderRadius: borderRadius.md,
+                    marginBottom: spacing.lg,
+                    background: colors.gray100
                   }}
                 />
               )}
-              <h3 style={{ margin: "0 0 8px 0", fontSize: 16, fontWeight: 600 }}>{part.name}</h3>
-              {part.specification && (
-                <p style={{ margin: "4px 0", fontSize: 13, color: "#666" }}>规格: {part.specification}</p>
-              )}
-              {part.material && <p style={{ margin: "4px 0", fontSize: 13, color: "#666" }}>材质: {part.material}</p>}
-              <p style={{ margin: "8px 0 0 0", fontSize: 14, fontWeight: 500 }}>库存: {part.quantity}</p>
+              
+              {/* 零件名称 */}
+              <h3 style={{ 
+                margin: 0, 
+                marginBottom: spacing.md,
+                fontSize: typography.fontSize.lg, 
+                fontWeight: typography.fontWeight.semibold,
+                color: colors.gray900
+              }}>
+                {part.name}
+              </h3>
+              
+              {/* 规格和材质 */}
+              <div style={{ marginBottom: spacing.lg }}>
+                {part.specification && (
+                  <p style={{ 
+                    margin: `${spacing.xs} 0`, 
+                    fontSize: typography.fontSize.sm, 
+                    color: colors.gray600
+                  }}>
+                    {part.specification}
+                  </p>
+                )}
+                {part.material && (
+                  <p style={{ 
+                    margin: `${spacing.xs} 0`, 
+                    fontSize: typography.fontSize.sm, 
+                    color: colors.gray600
+                  }}>
+                    {part.material}
+                  </p>
+                )}
+              </div>
+              
+              {/* 库存数量 */}
+              <div style={{ 
+                marginBottom: spacing.md,
+                padding: `${spacing.sm} ${spacing.md}`,
+                background: colors.gray50,
+                borderRadius: borderRadius.md
+              }}>
+                <span style={{ 
+                  fontSize: typography.fontSize.sm, 
+                  color: colors.gray600,
+                  marginRight: spacing.sm
+                }}>
+                  库存
+                </span>
+                <span style={{ 
+                  fontSize: typography.fontSize.base, 
+                  fontWeight: typography.fontWeight.semibold,
+                  color: colors.primary
+                }}>
+                  {part.quantity}
+                </span>
+              </div>
+              
+              {/* 标签 */}
               {part.tags && part.tags.length > 0 && (
-                <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <div style={{ marginBottom: spacing.lg, display: "flex", gap: spacing.xs, flexWrap: "wrap" }}>
                   {part.tags.map((tag, i) => (
                     <span
                       key={i}
                       style={{
-                        fontSize: 11,
-                        padding: "2px 8px",
-                        background: "#e0e7ff",
-                        color: "#3730a3",
-                        borderRadius: 12
+                        fontSize: typography.fontSize.xs,
+                        padding: `${spacing.xs} ${spacing.sm}`,
+                        background: colors.gray100,
+                        color: colors.gray700,
+                        borderRadius: borderRadius.full,
+                        fontWeight: typography.fontWeight.medium
                       }}
                     >
                       {tag}
@@ -349,62 +583,90 @@ export function PartsList() {
                   ))}
                 </div>
               )}
-              <div style={{ marginTop: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              
+              {/* 操作按钮 */}
+              <div style={{ marginTop: "auto", display: "flex", gap: spacing.sm, flexWrap: "wrap" }}>
                 <button
-                  onClick={() => handleEdit(part)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(part);
+                  }}
                   style={{
-                    padding: "4px 12px",
-                    fontSize: 12,
-                    border: "1px solid #2563eb",
-                    background: "white",
-                    color: "#2563eb",
-                    borderRadius: 4,
-                    cursor: "pointer"
+                    flex: "1 1 auto",
+                    padding: `${spacing.sm} ${spacing.md}`,
+                    fontSize: typography.fontSize.xs,
+                    border: `1px solid ${colors.gray300}`,
+                    background: colors.surface,
+                    color: colors.gray700,
+                    borderRadius: borderRadius.md,
+                    cursor: "pointer",
+                    fontWeight: typography.fontWeight.medium,
+                    transition: transitions.base
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = colors.gray100;
+                    e.currentTarget.style.borderColor = colors.gray400;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = colors.surface;
+                    e.currentTarget.style.borderColor = colors.gray300;
                   }}
                 >
                   编辑
                 </button>
                 <button
-                  onClick={() => handleInventoryChange(part, 10)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInventoryChange(part, 10);
+                  }}
                   style={{
-                    padding: "4px 12px",
-                    fontSize: 12,
-                    border: "1px solid #059669",
-                    background: "white",
-                    color: "#059669",
-                    borderRadius: 4,
-                    cursor: "pointer"
+                    padding: `${spacing.sm} ${spacing.md}`,
+                    fontSize: typography.fontSize.xs,
+                    border: `1px solid ${colors.gray300}`,
+                    background: colors.surface,
+                    color: colors.gray700,
+                    borderRadius: borderRadius.md,
+                    cursor: "pointer",
+                    fontWeight: typography.fontWeight.medium,
+                    transition: transitions.base
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = colors.gray100;
+                    e.currentTarget.style.borderColor = colors.gray400;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = colors.surface;
+                    e.currentTarget.style.borderColor = colors.gray300;
                   }}
                 >
-                  +10 入库
+                  +10
                 </button>
                 <button
-                  onClick={() => handleInventoryChange(part, -10)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInventoryChange(part, -10);
+                  }}
                   style={{
-                    padding: "4px 12px",
-                    fontSize: 12,
-                    border: "1px solid #dc2626",
-                    background: "white",
-                    color: "#dc2626",
-                    borderRadius: 4,
-                    cursor: "pointer"
+                    padding: `${spacing.sm} ${spacing.md}`,
+                    fontSize: typography.fontSize.xs,
+                    border: `1px solid ${colors.gray300}`,
+                    background: colors.surface,
+                    color: colors.gray700,
+                    borderRadius: borderRadius.md,
+                    cursor: "pointer",
+                    fontWeight: typography.fontWeight.medium,
+                    transition: transitions.base
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = colors.gray100;
+                    e.currentTarget.style.borderColor = colors.gray400;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = colors.surface;
+                    e.currentTarget.style.borderColor = colors.gray300;
                   }}
                 >
-                  -10 出库
-                </button>
-                <button
-                  onClick={() => handleDelete(part)}
-                  style={{
-                    padding: "4px 12px",
-                    fontSize: 12,
-                    border: "1px solid #dc2626",
-                    background: "#dc2626",
-                    color: "white",
-                    borderRadius: 4,
-                    cursor: "pointer"
-                  }}
-                >
-                  删除
+                  -10
                 </button>
               </div>
             </div>
