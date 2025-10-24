@@ -399,7 +399,7 @@ export const PartsList = forwardRef((props, ref) => {
             {buildCategoryOptionsWithRecent(categories, recentCategories).map((cat) => (
               <option 
                 key={cat.id} 
-                value={cat.id}
+                value={cat.id.startsWith('recent-') ? cat.id.substring(7) : cat.id}
                 disabled={cat.id === "recent-header" || cat.id === "separator"}
                 style={{
                   paddingLeft: `${cat.level * 16}px`,

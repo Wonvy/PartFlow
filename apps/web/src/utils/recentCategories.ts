@@ -78,7 +78,7 @@ export function buildCategoryOptionsWithRecent(
   if (recentCategories.length > 0) {
     result.push({
       id: 'recent-header',
-      label: '🕒 最近使用',
+      label: '最近使用',
       level: 0
     });
     
@@ -94,7 +94,7 @@ export function buildCategoryOptionsWithRecent(
           : '';
         
         result.push({
-          id: category.id,
+          id: `recent-${category.id}`,  // 添加前缀避免重复 key
           label: `　${displayIcon}${category.name}`,
           level: 1
         });

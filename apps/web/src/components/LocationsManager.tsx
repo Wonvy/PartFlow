@@ -8,6 +8,7 @@ export const LocationsManager = forwardRef((props, ref) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFormModal, setShowFormModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showPartsModal, setShowPartsModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ code: "", name: "", description: "" });
@@ -18,6 +19,14 @@ export const LocationsManager = forwardRef((props, ref) => {
 
   useEffect(() => {
     loadLocations();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const loadLocations = async () => {
@@ -225,8 +234,10 @@ export const LocationsManager = forwardRef((props, ref) => {
       ) : (
         <div style={{ 
           display: "grid", 
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", 
-          gap: spacing.xl 
+          gridTemplateColumns: isMobile 
+            ? "repeat(2, 1fr)"  // 移动端固定两列
+            : "repeat(auto-fill, minmax(320px, 1fr))",  // 桌面端自适应
+          gap: isMobile ? spacing.md : spacing.xl  // 移动端使用较小间距
         }}>
           {locations.map((location) => (
             <div
@@ -239,7 +250,7 @@ export const LocationsManager = forwardRef((props, ref) => {
                 background: colors.surface,
                 border: `2px solid ${colors.gray200}`,
                 borderRadius: borderRadius.lg,
-                padding: spacing.lg,
+                padding: isMobile ? spacing.md : spacing.lg,  // 移动端使用较小内边距
                 cursor: "pointer",
                 transition: transitions.base,
                 boxShadow: hoveredCard === location.id ? shadows.lg : "none"
@@ -325,9 +336,9 @@ export const LocationsManager = forwardRef((props, ref) => {
               {/* 左右布局：编号和零件数量 */}
               <div style={{
                 display: "flex",
-                gap: spacing.lg,
+                gap: isMobile ? spacing.md : spacing.lg,
                 marginBottom: location.description ? spacing.md : 0,
-                paddingRight: spacing.xl
+                paddingRight: isMobile ? spacing.md : spacing.xl
               }}>
                 {/* 左侧：盒子编号 */}
                 <div style={{
@@ -335,7 +346,7 @@ export const LocationsManager = forwardRef((props, ref) => {
                   textAlign: "center"
                 }}>
                   <div style={{
-                    fontSize: "48px",
+                    fontSize: isMobile ? "36px" : "48px",  // 移动端使用较小字体
                     fontWeight: typography.fontWeight.bold,
                     color: colors.primary,
                     lineHeight: 1,
@@ -361,10 +372,10 @@ export const LocationsManager = forwardRef((props, ref) => {
                   justifyContent: "center",
                   alignItems: "center",
                   borderLeft: `2px solid ${colors.gray200}`,
-                  paddingLeft: spacing.lg
+                  paddingLeft: isMobile ? spacing.md : spacing.lg
                 }}>
                   <div style={{
-                    fontSize: "40px",
+                    fontSize: isMobile ? "32px" : "40px",  // 移动端使用较小字体
                     fontWeight: typography.fontWeight.bold,
                     color: colors.accent,
                     lineHeight: 1,
