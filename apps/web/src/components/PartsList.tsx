@@ -134,8 +134,16 @@ export const PartsList = forwardRef((props, ref) => {
   const handleInventoryChange = async (part: Part, delta: number) => {
     const reason = delta > 0 ? "入库" : "出库";
     try {
-      await api.updateInventory(part.id, delta, reason);
-      loadParts();
+      const response = await api.updateInventory(part.id, delta, reason);
+      
+      // 局部更新：只更新当前零件的数据，避免整个列表刷新
+      setParts(prevParts => 
+        prevParts.map(p => 
+          p.id === part.id 
+            ? { ...p, quantity: response.data.quantity } // 使用服务器返回的最新数量
+            : p
+        )
+      );
     } catch (err) {
       alert(`库存更新失败: ${err instanceof Error ? err.message : "未知错误"}`);
     }
