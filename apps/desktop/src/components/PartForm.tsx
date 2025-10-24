@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import type { Part, Category, Location } from "@partflow/core";
 import { api } from "../api/client";
 import { ImageUpload } from "./ImageUpload";
-import { colors, typography, spacing, borderRadius, transitions } from "../styles/design-system";
-import { getRecentCategories, addRecentCategory, buildCategoryOptionsWithRecent } from "../utils/recentCategories";
 
 type PartFormProps = {
   part?: Part;
@@ -29,7 +27,6 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [recentCategories, setRecentCategories] = useState(getRecentCategories());
 
   useEffect(() => {
     loadCategoriesAndLocations();
@@ -74,20 +71,6 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
     // 从顶级分类开始
     buildTree(undefined, 0, '');
     return result;
-  };
-
-  // 处理分类选择
-  const handleCategoryChange = (categoryId: string) => {
-    setFormData({ ...formData, categoryId });
-    
-    // 如果选择了分类，添加到最近使用
-    if (categoryId) {
-      const selectedCategory = categories.find(cat => cat.id === categoryId);
-      if (selectedCategory) {
-        addRecentCategory(selectedCategory);
-        setRecentCategories(getRecentCategories());
-      }
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -274,40 +257,23 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
                   </label>
                   <select
                     value={formData.categoryId}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                     style={{
                       width: "100%",
-                      padding: `${spacing.md} ${spacing.lg}`,
-                      border: `1px solid ${colors.gray300}`,
-                      borderRadius: borderRadius.md,
-                      fontSize: typography.fontSize.sm,
-                      color: colors.gray900,
-                      backgroundColor: colors.surface,
-                      cursor: "pointer",
-                      outline: "none",
-                      transition: transitions.base,
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontSize: 14,
                       boxSizing: "border-box"
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = colors.accent;
-                      e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = colors.gray300;
-                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <option value="">-- 请选择 --</option>
-                    {buildCategoryOptionsWithRecent(categories, recentCategories).map((cat) => (
+                    {buildHierarchicalCategories().map((cat) => (
                       <option 
                         key={cat.id} 
                         value={cat.id}
-                        disabled={cat.id === "recent-header" || cat.id === "separator"}
                         style={{
-                          paddingLeft: `${cat.level * 16}px`,
-                          fontWeight: cat.id === "recent-header" ? "bold" : "normal",
-                          color: cat.id === "separator" ? "#ccc" : "inherit",
-                          backgroundColor: cat.id === "recent-header" ? "#f0f0f0" : "inherit"
+                          paddingLeft: `${cat.level * 16}px`
                         }}
                       >
                         {cat.label}
@@ -327,24 +293,11 @@ export function PartForm({ part, onSave, onCancel }: PartFormProps) {
                   onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                   style={{
                     width: "100%",
-                    padding: `${spacing.md} ${spacing.lg}`,
-                    border: `1px solid ${colors.gray300}`,
-                    borderRadius: borderRadius.md,
-                    fontSize: typography.fontSize.sm,
-                    color: colors.gray900,
-                    backgroundColor: colors.surface,
-                    cursor: "pointer",
-                    outline: "none",
-                    transition: transitions.base,
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                    fontSize: 14,
                     boxSizing: "border-box"
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = colors.accent;
-                    e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = colors.gray300;
-                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
                   <option value="">-- 请选择 --</option>

@@ -16,19 +16,9 @@ export const CategoriesManager = forwardRef((props, ref) => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [iconPreview, setIconPreview] = useState<string>("");
-  
-  // 检测是否为移动设备
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     loadCategories();
-    
-    // 监听窗口大小变化
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const loadCategories = async () => {
@@ -209,7 +199,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
           position: "relative",
           background: colors.surface,
           border: `1px solid ${colors.gray300}`,
-          borderRadius: isMobile ? borderRadius.md : borderRadius.lg,
+          borderRadius: borderRadius.lg,
           cursor: "pointer",
           transition: transitions.fast,
           boxShadow: hoveredCard === category.id ? shadows.md : shadows.sm,
@@ -218,7 +208,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: isMobile ? spacing.xs : spacing.md,
+          padding: spacing.md,
           overflow: "hidden"
         }}
       >
@@ -297,20 +287,20 @@ export const CategoriesManager = forwardRef((props, ref) => {
 
         {/* 图标 */}
         <div style={{
-          fontSize: isMobile ? "32px" : "48px",
-          marginBottom: isMobile ? spacing.xs : spacing.sm,
+          fontSize: "48px",
+          marginBottom: spacing.sm,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           width: "100%",
-          height: isMobile ? "55%" : "60%"
+          height: "60%"
         }}>
           {isImageIcon ? (
             <img 
               src={category.icon} 
               alt={category.name}
               style={{
-                maxWidth: isMobile ? "70%" : "80%",
+                maxWidth: "80%",
                 maxHeight: "100%",
                 objectFit: "contain"
               }}
@@ -319,15 +309,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
             <span>{category.icon}</span>
           ) : (
             // 默认图标：分类/文件夹图标
-            <svg 
-              width={isMobile ? "32" : "48"} 
-              height={isMobile ? "32" : "48"} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              style={{ color: colors.gray400 }}
-            >
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: colors.gray400 }}>
               <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2Z"></path>
             </svg>
           )}
@@ -335,7 +317,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
 
         {/* 名称 */}
         <div style={{
-          fontSize: isMobile ? typography.fontSize.xs : typography.fontSize.sm,
+          fontSize: typography.fontSize.sm,
           fontWeight: typography.fontWeight.medium,
           color: colors.gray900,
           textAlign: "center",
@@ -343,8 +325,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          paddingTop: isMobile ? '2px' : spacing.xs,
-          lineHeight: isMobile ? '1.2' : '1.5'
+          paddingTop: spacing.xs
         }}>
           {category.name}
         </div>
@@ -357,40 +338,19 @@ export const CategoriesManager = forwardRef((props, ref) => {
     const children = getChildren(category.id);
     const hasChildren = children.length > 0;
     const isCollapsed = collapsedCategories.has(category.id);
-    
-    // 移动端使用更紧凑的间距
-    const mobilePadding = {
-      level0: '8px',
-      level1: '6px',
-      level2: '4px'
-    };
-    const desktopPadding = {
-      level0: spacing.md,
-      level1: spacing.sm,
-      level2: spacing.xs
-    };
-    const paddingVertical = isMobile 
-      ? (level === 0 ? mobilePadding.level0 : level === 1 ? mobilePadding.level1 : mobilePadding.level2)
-      : (level === 0 ? desktopPadding.level0 : level === 1 ? desktopPadding.level1 : desktopPadding.level2);
-    
-    const marginBottom = isMobile
-      ? (level === 0 ? spacing.sm : spacing.xs)
-      : (level === 0 ? spacing.lg : spacing.sm);
-    
-    const leftIndent = isMobile ? level * 16 : level * 24;
 
     return (
-      <div key={category.id} style={{ marginBottom }}>
+      <div key={category.id} style={{ marginBottom: level === 0 ? spacing.lg : spacing.sm }}>
         <div
           onMouseEnter={() => setHoveredCard(category.id)}
           onMouseLeave={() => setHoveredCard(null)}
           style={{
             position: "relative",
-            background: "transparent",
-            border: "none",
+            background: "transparent", // 透明背景
+            border: "none", // 移除边框
             borderRadius: borderRadius.lg,
-            padding: `${paddingVertical} ${isMobile ? spacing.sm : spacing.md}`,
-            marginLeft: `${leftIndent}px`,
+            padding: `${level === 0 ? spacing.md : spacing.sm} ${spacing.md}`,
+            marginLeft: `${level * 24}px`,
             cursor: "pointer",
             transition: transitions.base
           }}
@@ -440,9 +400,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
             >
               <h3 style={{
                 margin: 0,
-                fontSize: isMobile 
-                  ? (level === 0 ? typography.fontSize.base : typography.fontSize.sm)
-                  : (level === 0 ? typography.fontSize.lg : typography.fontSize.base),
+                fontSize: level === 0 ? typography.fontSize.lg : typography.fontSize.base,
                 fontWeight: level === 0 ? typography.fontWeight.bold : typography.fontWeight.semibold,
                 color: colors.gray900,
                 overflow: "hidden",
@@ -453,7 +411,7 @@ export const CategoriesManager = forwardRef((props, ref) => {
                 {category.name}
               </h3>
 
-              {category.description && !isMobile && (
+              {category.description && (
                 <p style={{
                   margin: `${spacing.xs} 0 0 0`,
                   fontSize: typography.fontSize.sm,
@@ -576,19 +534,14 @@ export const CategoriesManager = forwardRef((props, ref) => {
 
         {/* 递归渲染子分类 - 如果是二级分类，则使用多列布局显示三级 */}
         {hasChildren && !isCollapsed && (
-          <div style={{ 
-            marginTop: isMobile ? spacing.sm : spacing.md, 
-            marginLeft: isMobile ? `${level * 20}px` : `${level * 32}px` 
-          }}>
+          <div style={{ marginTop: spacing.md, marginLeft: `${level * 32}px` }}>
             {level === 1 ? (
               // 二级分类的子分类（三级）使用多列布局
               <div style={{
                 display: "grid",
-                gridTemplateColumns: isMobile 
-                  ? "repeat(auto-fill, minmax(90px, 1fr))"  // 移动端更紧凑，每行更多列
-                  : "repeat(auto-fill, minmax(120px, 1fr))",
-                gap: isMobile ? spacing.xs : spacing.sm,
-                marginLeft: isMobile ? "16px" : "32px"
+                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                gap: spacing.sm,
+                marginLeft: "32px"
               }}>
                 {children.map(child => renderLeafCategoryCard(child))}
               </div>

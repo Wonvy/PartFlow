@@ -1,21 +1,6 @@
 import type { Part, Category, Location } from "@partflow/core";
 
-// 自动检测 API 地址：如果当前访问不是 localhost，则使用当前主机的 IP
-const getApiBase = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // 如果是通过局域网 IP 访问的，使用相同的 IP 访问后端
-  const hostname = window.location.hostname;
-  if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    return `http://${hostname}:3333/api`;
-  }
-  
-  return "http://localhost:3333/api";
-};
-
-const API_BASE = getApiBase();
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3333/api";
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // 对于 DELETE 请求，不设置 Content-Type 头

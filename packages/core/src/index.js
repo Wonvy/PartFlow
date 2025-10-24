@@ -21,6 +21,7 @@ export function createCategory(input) {
         id: input.id ?? cryptoRandomId(),
         name: input.name,
         parentId: input.parentId,
+        icon: input.icon,
         description: input.description,
         createdAt: now,
         updatedAt: now
@@ -30,6 +31,7 @@ export function createLocation(input) {
     const now = new Date().toISOString();
     return {
         id: input.id ?? cryptoRandomId(),
+        code: input.code.toUpperCase(), // 自动转大写
         name: input.name,
         description: input.description,
         createdAt: now,

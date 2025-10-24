@@ -9,7 +9,10 @@ import { importRoutes } from "./routes/import.js";
 // 初始化数据库
 initDatabase();
 
-const server = Fastify({ logger: true });
+const server = Fastify({ 
+  logger: true,
+  bodyLimit: 10 * 1024 * 1024 // 设置请求体限制为 10MB（支持图片上传）
+});
 
 // CORS 支持
 server.register(import("@fastify/cors"), {

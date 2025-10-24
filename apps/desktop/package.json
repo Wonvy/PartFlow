@@ -6,7 +6,7 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build && electron-builder",
+    "build": "pnpm --filter @partflow/server build && vite build && electron-builder",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -33,6 +33,21 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../../packages/server/dist",
+        "to": "server",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../../node_modules",
+        "to": "server/node_modules",
+        "filter": ["fastify/**/*", "better-sqlite3/**/*", "@fastify/**/*", "pino/**/*", "cors/**/*"]
+      }
+    ],
+    "asarUnpack": [
+      "**/*.node"
     ]
   }
 }

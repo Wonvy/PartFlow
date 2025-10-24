@@ -3,7 +3,6 @@ import type { Part } from "@partflow/core";
 import { api } from "../api/client";
 import { PartForm } from "./PartForm";
 import { colors, typography, spacing, borderRadius, shadows, transitions } from "../styles/design-system";
-import { getRecentCategories, addRecentCategory, buildCategoryOptionsWithRecent } from "../utils/recentCategories";
 
 export const PartsList = forwardRef((props, ref) => {
   const [parts, setParts] = useState<Part[]>([]);
@@ -18,9 +17,6 @@ export const PartsList = forwardRef((props, ref) => {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [editingQuantity, setEditingQuantity] = useState<Record<string, number>>({});
-  const [isSearching, setIsSearching] = useState(false); // 用于区分初始加载和搜索中
-  const searchInputRef = React.useRef<HTMLInputElement>(null); // 保持输入框引用
-  const [recentCategories, setRecentCategories] = useState(getRecentCategories());
 
   useEffect(() => {
     loadParts();
@@ -30,8 +26,8 @@ export const PartsList = forwardRef((props, ref) => {
   // 实时搜索：当搜索条件改变时自动触发（带防抖）
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadParts(true); // 标记为搜索请求
-    }, 500); // 增加到500ms防抖延迟，减少移动端请求频率
+      loadParts();
+    }, 300); // 300ms 防抖延迟
 
     return () => clearTimeout(timer);
   }, [search, selectedCategory, selectedLocation]);
@@ -77,14 +73,9 @@ export const PartsList = forwardRef((props, ref) => {
     return result;
   };
 
-  const loadParts = async (isSearch = false) => {
+  const loadParts = async () => {
     try {
-      // 只在初始加载时显示 loading，搜索时不显示（避免输入框失焦）
-      if (!isSearch) {
-        setLoading(true);
-      } else {
-        setIsSearching(true);
-      }
+      setLoading(true);
       setError(null);
       const response = await api.getParts({ 
         search: search || undefined,
@@ -96,7 +87,6 @@ export const PartsList = forwardRef((props, ref) => {
       setError(err instanceof Error ? err.message : "加载失败");
     } finally {
       setLoading(false);
-      setIsSearching(false);
     }
   };
 
@@ -104,20 +94,6 @@ export const PartsList = forwardRef((props, ref) => {
     setSearch("");
     setSelectedCategory("");
     setSelectedLocation("");
-  };
-
-  // 处理分类选择
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    
-    // 如果选择了分类，添加到最近使用
-    if (categoryId) {
-      const selectedCategory = categories.find(cat => cat.id === categoryId);
-      if (selectedCategory) {
-        addRecentCategory(selectedCategory);
-        setRecentCategories(getRecentCategories());
-      }
-    }
   };
 
   const handleDelete = async (part: Part) => {
@@ -251,60 +227,27 @@ export const PartsList = forwardRef((props, ref) => {
           maxWidth: "400px",
           position: "relative" 
         }}>
-          {/* 搜索图标（左侧）或搜索中加载动画 */}
+          {/* 搜索图标（左侧） */}
           <div style={{
             position: "absolute",
             left: "12px",
             top: "50%",
             transform: "translateY(-50%)",
-            color: isSearching ? colors.primary : colors.gray400,
+            color: colors.gray400,
             pointerEvents: "none",
             zIndex: 1
           }}>
-            {isSearching ? (
-              // 搜索中显示加载动画
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 1s linear infinite" }}>
-                <line x1="12" y1="2" x2="12" y2="6"></line>
-                <line x1="12" y1="18" x2="12" y2="22"></line>
-                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                <line x1="2" y1="12" x2="6" y2="12"></line>
-                <line x1="18" y1="12" x2="22" y2="12"></line>
-                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-            )}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
           </div>
-          
-          {/* 添加旋转动画的样式 */}
-          <style>{`
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-            
-            /* 移动端下拉框和输入框高度统一 */
-            @media (max-width: 768px) {
-              select, input[type="text"] {
-                height: 44px !important;
-                font-size: 14px !important;
-                padding: 12px 16px !important;
-              }
-            }
-          `}</style>
 
           <input
-            ref={searchInputRef}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索零件名称、规格或材质..."
-            autoComplete="off"
             style={{
               width: "100%",
               padding: `${spacing.md} ${spacing.lg}`,
@@ -317,8 +260,7 @@ export const PartsList = forwardRef((props, ref) => {
               backgroundColor: colors.surface,
               transition: transitions.base,
               outline: "none",
-              boxSizing: "border-box",
-              height: "48px" // 确保高度统一
+              boxSizing: "border-box"
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = colors.accent;
@@ -372,13 +314,12 @@ export const PartsList = forwardRef((props, ref) => {
         <div style={{
           display: "flex",
           gap: spacing.md,
-          alignItems: "center",
-          flexWrap: "wrap" // 移动端换行
+          alignItems: "center"
         }}>
           {/* 分类筛选 */}
           <select
             value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             style={{
               padding: `${spacing.md} ${spacing.lg}`,
               border: `1px solid ${colors.gray300}`,
@@ -389,23 +330,16 @@ export const PartsList = forwardRef((props, ref) => {
               cursor: "pointer",
               outline: "none",
               fontWeight: typography.fontWeight.medium,
-              minWidth: "120px",
-              height: "48px", // 确保高度统一
-              boxSizing: "border-box",
-              transition: transitions.base
+              minWidth: "120px"
             }}
           >
             <option value="">全部分类</option>
-            {buildCategoryOptionsWithRecent(categories, recentCategories).map((cat) => (
+            {buildHierarchicalCategories().map((cat) => (
               <option 
                 key={cat.id} 
                 value={cat.id}
-                disabled={cat.id === "recent-header" || cat.id === "separator"}
                 style={{
-                  paddingLeft: `${cat.level * 16}px`,
-                  fontWeight: cat.id === "recent-header" ? "bold" : "normal",
-                  color: cat.id === "separator" ? "#ccc" : "inherit",
-                  backgroundColor: cat.id === "recent-header" ? "#f0f0f0" : "inherit"
+                  paddingLeft: `${cat.level * 16}px`
                 }}
               >
                 {cat.label}
@@ -427,10 +361,7 @@ export const PartsList = forwardRef((props, ref) => {
               cursor: "pointer",
               outline: "none",
               fontWeight: typography.fontWeight.medium,
-              minWidth: "120px",
-              height: "48px", // 确保高度统一
-              boxSizing: "border-box",
-              transition: transitions.base
+              minWidth: "120px"
             }}
           >
             <option value="">全部盒子</option>

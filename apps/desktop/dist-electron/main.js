@@ -1,33 +1,17 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, Tray, nativeImage } from "electron";
+import { app, nativeImage, Tray, Menu, dialog, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { spawn, ChildProcess } from "node:child_process";
-
-// 兼容 ESM：定义 __filename/__dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const isDev = process.env.NODE_ENV === "development";
-
-type WindowState = {
-  x?: number;
-  y?: number;
-  width: number;
-  height: number;
-  isMaximized?: boolean;
-};
-
-let mainWindow: BrowserWindow | null = null;
-let tray: Tray | null = null;
-let serverProcess: ChildProcess | null = null;
-
-function getWindowStateFile(): string {
+let mainWindow = null;
+let tray = null;
+function getWindowStateFile() {
   const userData = app.getPath("userData");
   return path.join(userData, "window-state.json");
 }
-
-function loadWindowState(): WindowState {
+function loadWindowState() {
   const stateFile = getWindowStateFile();
   try {
     if (fs.existsSync(stateFile)) {
@@ -36,19 +20,19 @@ function loadWindowState(): WindowState {
       return {
         width: Math.max(800, Number(parsed.width) || 1200),
         height: Math.max(600, Number(parsed.height) || 800),
-        x: typeof parsed.x === "number" ? parsed.x : undefined,
-        y: typeof parsed.y === "number" ? parsed.y : undefined,
+        x: typeof parsed.x === "number" ? parsed.x : void 0,
+        y: typeof parsed.y === "number" ? parsed.y : void 0,
         isMaximized: Boolean(parsed.isMaximized)
       };
     }
-  } catch {}
+  } catch {
+  }
   return { width: 1200, height: 800 };
 }
-
-function saveWindowState(win: BrowserWindow) {
+function saveWindowState(win) {
   const stateFile = getWindowStateFile();
   const bounds = win.getBounds();
-  const payload: WindowState = {
+  const payload = {
     width: bounds.width,
     height: bounds.height,
     x: bounds.x,
@@ -57,11 +41,11 @@ function saveWindowState(win: BrowserWindow) {
   };
   try {
     fs.writeFileSync(stateFile, JSON.stringify(payload));
-  } catch {}
+  } catch {
+  }
 }
-
 function createMenu() {
-  const template: Electron.MenuItemConstructorOptions[] = [
+  const template = [
     {
       label: "应用",
       submenu: [
@@ -86,7 +70,6 @@ function createMenu() {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
-
 function registerIpcHandlers() {
   ipcMain.handle("dialog:openFile", async () => {
     const result = await dialog.showOpenDialog({
@@ -100,12 +83,11 @@ function registerIpcHandlers() {
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
   });
-
-  ipcMain.handle("dialog:saveFile", async (_evt, opts?: { defaultPath?: string; ext?: string }) => {
+  ipcMain.handle("dialog:saveFile", async (_evt, opts) => {
     const result = await dialog.showSaveDialog({
-      defaultPath: opts?.defaultPath,
+      defaultPath: opts == null ? void 0 : opts.defaultPath,
       filters: [
-        { name: "JSON", extensions: [opts?.ext || "json"] },
+        { name: "JSON", extensions: [(opts == null ? void 0 : opts.ext) || "json"] },
         { name: "All Files", extensions: ["*"] }
       ]
     });
@@ -113,7 +95,6 @@ function registerIpcHandlers() {
     return result.filePath;
   });
 }
-
 function createWindow() {
   const state = loadWindowState();
   const win = new BrowserWindow({
@@ -127,10 +108,7 @@ function createWindow() {
       nodeIntegration: false
     }
   });
-
   mainWindow = win;
-
-  // 关闭到托盘（拦截关闭事件）
   win.on("close", (e) => {
     if (!app.isQuiting) {
       e.preventDefault();
@@ -139,16 +117,12 @@ function createWindow() {
     }
     saveWindowState(win);
   });
-
   if (state.isMaximized) {
     win.maximize();
   }
-
   win.on("move", () => saveWindowState(win));
   win.on("resize", () => saveWindowState(win));
-
   if (isDev) {
-    // vite-plugin-electron 会自动注入 VITE_DEV_SERVER_URL
     const devUrl = process.env.VITE_DEV_SERVER_URL;
     if (devUrl) {
       win.loadURL(devUrl);
@@ -160,10 +134,7 @@ function createWindow() {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 }
-
-// 单实例锁
 const singleLock = app.requestSingleInstanceLock();
-
 if (!singleLock) {
   app.quit();
 } else {
@@ -173,32 +144,23 @@ if (!singleLock) {
       mainWindow.focus();
     }
   });
-
   app.whenReady().then(() => {
     createMenu();
     registerIpcHandlers();
-    
-    // 启动后端服务器
     startBackendServer();
-    
-    // 等待后端启动后再创建窗口
     setTimeout(() => {
       createWindow();
-    }, 2000); // 给后端 2 秒启动时间
-
-    // 创建系统托盘
+    }, 2e3);
     try {
       const iconPath = path.join(process.resourcesPath || __dirname, "icon.png");
       let image = nativeImage.createFromPath(iconPath);
       if (image.isEmpty()) {
-        // 兼容开发态：从项目根目录寻找
         image = nativeImage.createFromPath(path.join(process.cwd(), "apps/desktop/icon.png"));
       }
       tray = new Tray(image);
     } catch {
       tray = new Tray(nativeImage.createEmpty());
     }
-
     const contextMenu = Menu.buildFromTemplate([
       {
         label: "显示窗口",
@@ -213,12 +175,11 @@ if (!singleLock) {
       {
         label: "退出",
         click: () => {
-          app.isQuiting = true as any;
+          app.isQuiting = true;
           app.quit();
         }
       }
     ]);
-
     tray.setToolTip("PartFlow");
     tray.setContextMenu(contextMenu);
     tray.on("click", () => {
@@ -232,15 +193,9 @@ if (!singleLock) {
     });
   });
 }
-
-// 启动后端服务器
 function startBackendServer() {
-  // 当前版本暂不自动启动后端
-  // 用户需要手动启动后端服务器
   console.log("⚠️ 当前版本需要手动启动后端服务器");
   console.log("📝 请在项目目录运行: pnpm --filter @partflow/server dev");
-  
-  // 显示提示信息（仅首次运行）
   if (!isDev) {
     setTimeout(() => {
       dialog.showMessageBox({
@@ -250,40 +205,22 @@ function startBackendServer() {
         detail: "当前版本需要手动启动后端服务器。\n\n请确保后端服务正在运行 (http://localhost:3333)\n\n如需帮助，请查看项目文档。",
         buttons: ["我知道了"]
       });
-    }, 3000);
+    }, 3e3);
   }
 }
-
-// 停止后端服务器
-function stopBackendServer() {
-  if (serverProcess) {
-    console.log("🛑 Stopping backend server...");
-    serverProcess.kill();
-    serverProcess = null;
-  }
-}
-
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    stopBackendServer();
     app.quit();
   }
 });
-
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
-
-// 应用退出前清理
 app.on("before-quit", () => {
   console.log("🔄 Application quitting, cleaning up...");
-  app.isQuiting = true as any;
-  stopBackendServer();
+  app.isQuiting = true;
 });
-
 app.on("will-quit", () => {
-  stopBackendServer();
 });
-

@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "module": "ESNext",
-    "target": "ES2021"
+    "target": "ES2021",
+    "skipLibCheck": true,
+    "noEmitOnError": false
   },
   "include": [
     "src"

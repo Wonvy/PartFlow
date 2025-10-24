@@ -12,7 +12,6 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // 监听剪贴板粘贴事件
@@ -118,7 +117,6 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
 
   return (
     <div>
-      {/* 选择本地图片的 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -126,17 +124,6 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
         onChange={handleFileSelect}
         style={{ display: "none" }}
         aria-label="选择图片文件"
-      />
-      
-      {/* 拍照的 input */}
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileSelect}
-        style={{ display: "none" }}
-        aria-label="拍照"
       />
 
       {showCamera && (
@@ -189,7 +176,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
             </button>
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowCamera(true)}
               style={{
                 padding: "6px 12px",
                 fontSize: 13,
@@ -210,32 +197,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                 e.currentTarget.style.borderColor = "#ddd";
               }}
             >
-              📁 选择图片
-            </button>
-            <button
-              type="button"
-              onClick={() => cameraInputRef.current?.click()}
-              style={{
-                padding: "6px 12px",
-                fontSize: 13,
-                border: "1px solid #ddd",
-                background: "white",
-                color: "#666",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontWeight: 500,
-                transition: "all 0.2s"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#f3f4f6";
-                e.currentTarget.style.borderColor = "#9ca3af";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "white";
-                e.currentTarget.style.borderColor = "#ddd";
-              }}
-            >
-              📷 拍照
+              拍照
             </button>
             <button
               type="button"
@@ -272,6 +234,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
           style={{
             border: `2px dashed ${isDragging ? "#2563eb" : "#d1d5db"}`,
             borderRadius: 8,
@@ -295,71 +258,40 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
               </div>
-              <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "#374151", fontWeight: 500 }}>
-                选择图片上传方式
+              <p style={{ margin: "0 0 8px 0", fontSize: 14, color: "#374151", fontWeight: 500 }}>
+                点击选择图片
               </p>
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    padding: "8px 16px",
-                    fontSize: 13,
-                    border: "1px solid #d1d5db",
-                    background: "white",
-                    color: "#374151",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    fontWeight: 500,
-                    transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#f3f4f6";
-                    e.currentTarget.style.borderColor = "#9ca3af";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "white";
-                    e.currentTarget.style.borderColor = "#d1d5db";
-                  }}
-                >
-                  📁 选择图片
-                </button>
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  style={{
-                    padding: "8px 16px",
-                    fontSize: 13,
-                    border: "1px solid #d1d5db",
-                    background: "white",
-                    color: "#374151",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    fontWeight: 500,
-                    transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#f3f4f6";
-                    e.currentTarget.style.borderColor = "#9ca3af";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "white";
-                    e.currentTarget.style.borderColor = "#d1d5db";
-                  }}
-                >
-                  📷 拍照
-                </button>
-              </div>
               <p style={{ margin: "0 0 8px 0", fontSize: 13, color: "#6b7280" }}>
                 或拖拽图片到此处
               </p>
-              <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+                提示：也可以直接 Ctrl+V 粘贴剪贴板中的图片
+              </p>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCamera(true);
+                }}
+                style={{
+                  marginTop: 12,
+                  padding: "8px 20px",
+                  fontSize: 14,
+                  background: "#059669",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontWeight: 500
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "6px", verticalAlign: "middle" }}>
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                使用相机拍照
+              </button>
+              <p style={{ margin: "12px 0 0 0", fontSize: 11, color: "#9ca3af" }}>
                 支持 JPG、PNG、GIF，最大 5MB
               </p>
             </div>

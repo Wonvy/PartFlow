@@ -3,12 +3,14 @@ import { PartsList } from "./components/PartsList";
 import { CategoriesManager } from "./components/CategoriesManager";
 import { LocationsManager } from "./components/LocationsManager";
 import { DataManager } from "./components/DataManager";
+import { QRCodeModal } from "./components/QRCodeModal";
 import { colors, typography, spacing, borderRadius, shadows } from "./styles/design-system";
 
 type Page = "parts" | "categories" | "locations" | "data";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("parts");
+  const [showQRCode, setShowQRCode] = useState(false);
   const partsListRef = useRef<{ handleCreate: () => void }>(null);
   const categoriesRef = useRef<{ handleCreate: () => void }>(null);
   const locationsRef = useRef<{ handleCreate: () => void }>(null);
@@ -75,39 +77,90 @@ export default function App() {
               </p>
             </div>
             
-            {/* 新建零件按钮 - 在所有页面都显示 */}
-            <button
-              onClick={handleCreateNew}
-              style={{
-                width: "48px",
-                height: "48px",
-                background: colors.primary,
-                color: colors.white,
-                border: "none",
-                borderRadius: borderRadius.lg,
-                cursor: "pointer",
-                fontSize: "24px",
-                fontWeight: typography.fontWeight.normal,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-                boxShadow: shadows.sm
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = colors.primaryLight;
-                e.currentTarget.style.boxShadow = shadows.md;
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = colors.primary;
-                e.currentTarget.style.boxShadow = shadows.sm;
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-              title="新建零件"
-            >
-              +
-            </button>
+            {/* 右侧按钮组 */}
+            <div style={{ display: "flex", gap: spacing.md, alignItems: "center" }}>
+              {/* 新建零件按钮 - 在所有页面都显示 */}
+              <button
+                onClick={handleCreateNew}
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  background: colors.primary,
+                  color: colors.white,
+                  border: "none",
+                  borderRadius: borderRadius.lg,
+                  cursor: "pointer",
+                  fontSize: "24px",
+                  fontWeight: typography.fontWeight.normal,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease",
+                  boxShadow: shadows.sm
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colors.primaryLight;
+                  e.currentTarget.style.boxShadow = shadows.md;
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = colors.primary;
+                  e.currentTarget.style.boxShadow = shadows.sm;
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+                title="新建零件"
+              >
+                +
+              </button>
+
+              {/* 二维码按钮 */}
+              <button
+                onClick={() => setShowQRCode(true)}
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  background: colors.white,
+                  color: colors.gray700,
+                  border: `1px solid ${colors.gray300}`,
+                  borderRadius: borderRadius.lg,
+                  cursor: "pointer",
+                  fontSize: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease",
+                  boxShadow: shadows.sm
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colors.gray50;
+                  e.currentTarget.style.borderColor = colors.gray400;
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = colors.white;
+                  e.currentTarget.style.borderColor = colors.gray300;
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+                title="生成二维码"
+              >
+                <svg 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                  <path d="M14 14h7v7"/>
+                  <rect x="17" y="17" width="4" height="4"/>
+                </svg>
+              </button>
+            </div>
           </div>
           
           {/* 导航标签 */}
@@ -211,6 +264,9 @@ export default function App() {
           <DataManager />
         </div>
       </main>
+
+      {/* 二维码模态框 */}
+      <QRCodeModal isOpen={showQRCode} onClose={() => setShowQRCode(false)} />
     </div>
   );
 }
